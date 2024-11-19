@@ -9,9 +9,6 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Math;
 import org.joml.Matrix3f;
@@ -33,13 +30,6 @@ public class SimpleBakedModelRenderer {
     private static final int[] CUBE_NORMALS = new int[Direction.values().length];
     private static int LAST_TINT_INDEX = -1;
     private static int LAST_TINT = -1;
-
-    private enum RenderType {
-        Item,
-        Block,
-        Unknown
-    }
-
     public static int extractViewableNormal(Matrix4f mat, Direction direction, Vector3f view, ItemTransform gui) {
         float x, y, z;
 
