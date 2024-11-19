@@ -13,6 +13,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Math;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -92,6 +93,11 @@ public class SimpleBakedModelRenderer {
         if (view.z < 0) {
             if (view.dot(x, y, z) > 0.1f) return 0;
         }
+
+        float scalar = Math.invsqrt(Math.fma(x, x, Math.fma(y, y, z * z)));
+        x *= scalar;
+        y *= scalar;
+        z *= scalar;
 
         return NormI8.pack(x, y, z);
     }
