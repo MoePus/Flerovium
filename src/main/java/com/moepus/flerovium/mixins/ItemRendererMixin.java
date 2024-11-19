@@ -29,6 +29,9 @@ public abstract class ItemRendererMixin {
             return;
 
         VertexBufferWriter writer = VertexBufferWriter.tryOf(vertexConsumer);
+        if (writer == null)
+            return;
+
         SimpleBakedModelRenderer.render(model, itemStack, packedLight, packedOverlay, poseStack, writer, itemColors);
         ci.cancel();
     }
