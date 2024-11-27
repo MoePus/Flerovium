@@ -35,7 +35,10 @@ public class SimpleBakedModelRenderer {
         float x = 0, y = 0, z = 0;
         switch (direction) {
             case DOWN -> {
-                return 0;
+                if (gui.rotation.z() == 0) return 0;
+                x = -mat.m10();
+                y = -mat.m11();
+                z = -mat.m12();
             }
             case UP -> {
                 if (gui.rotation.x() == 0) return 0;
@@ -142,7 +145,7 @@ public class SimpleBakedModelRenderer {
                 CUBE_NORMALS[5] = extractViewableNormal(mat, Direction.EAST, view);
             }
         } else {
-            CUBE_NORMALS[0] = 0;
+            CUBE_NORMALS[0] = extractViewableNormalGUI(mat, Direction.DOWN, gui);
             CUBE_NORMALS[1] = extractViewableNormalGUI(mat, Direction.UP, gui);
             CUBE_NORMALS[2] = extractViewableNormalGUI(mat, Direction.NORTH, gui);
             CUBE_NORMALS[3] = extractViewableNormalGUI(mat, Direction.SOUTH, gui);
