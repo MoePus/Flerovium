@@ -28,6 +28,9 @@ public abstract class ItemRendererMixin {
         if (model.getClass() != SimpleBakedModel.class)
             return;
 
+        if(poseStack.poseStack.size() <= 2)
+            return;
+
         VertexBufferWriter writer = VertexBufferWriter.tryOf(vertexConsumer);
         if (writer == null)
             return;
