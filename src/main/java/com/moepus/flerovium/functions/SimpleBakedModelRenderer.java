@@ -131,18 +131,66 @@ public class SimpleBakedModelRenderer {
         return NormI8.pack(x * scalar, y * scalar, z * scalar);
     }
 
+    public static int extractNormal(Matrix4f mat, Direction direction) {
+        float x = 0, y = 0, z = 0;
+        switch (direction) {
+            case DOWN -> {
+                x = -mat.m10();
+                y = -mat.m11();
+                z = -mat.m12();
+            }
+            case UP -> {
+                x = mat.m10();
+                y = mat.m11();
+                z = mat.m12();
+            }
+            case NORTH -> {
+                x = -mat.m20();
+                y = -mat.m21();
+                z = -mat.m22();
+            }
+            case SOUTH -> {
+                x = mat.m20();
+                y = mat.m21();
+                z = mat.m22();
+            }
+            case WEST -> {
+                x = -mat.m00();
+                y = -mat.m01();
+                z = -mat.m02();
+            }
+            case EAST -> {
+                x = mat.m00();
+                y = mat.m01();
+                z = mat.m02();
+            }
+        }
+
+        float scalar = Math.invsqrt(Math.fma(x, x, Math.fma(y, y, z * z)));
+        return NormI8.pack(x * scalar, y * scalar, z * scalar);
+    }
+
     public static void prepareNormals(PoseStack.Pose pose, ItemTransform gui) {
         Matrix4f mat = pose.pose();
         if (mat.m32() < 0) {
+            if (gui.scale.x < 0.5F) { // no cull for big item
+                CUBE_NORMALS[0] = extractNormal(mat, Direction.DOWN);
+                CUBE_NORMALS[1] = extractNormal(mat, Direction.UP);
+                CUBE_NORMALS[2] = extractNormal(mat, Direction.NORTH);
+                CUBE_NORMALS[3] = extractNormal(mat, Direction.SOUTH);
+                CUBE_NORMALS[4] = extractNormal(mat, Direction.WEST);
+                CUBE_NORMALS[5] = extractNormal(mat, Direction.EAST);
+                return;
+            }
             Vector3f view = new Vector3f(mat.m30(), mat.m31(), mat.m32()).normalize();
-            if (mat.m32() <= -16.0f && gui.rotation.x == 0) {
+            if (mat.m32() <= -16.0f && gui.rotation.x == 0) { // render only front and backside for far away items
                 CUBE_NORMALS[0] = 0;
                 CUBE_NORMALS[1] = 0;
                 CUBE_NORMALS[2] = extractViewableNormal(mat, Direction.NORTH, view);
                 CUBE_NORMALS[3] = extractViewableNormal(mat, Direction.SOUTH, view);
                 CUBE_NORMALS[4] = 0;
                 CUBE_NORMALS[5] = 0;
-            } else {
+            } else { // normal backface culling
                 CUBE_NORMALS[0] = extractViewableNormal(mat, Direction.DOWN, view);
                 CUBE_NORMALS[1] = extractViewableNormal(mat, Direction.UP, view);
                 CUBE_NORMALS[2] = extractViewableNormal(mat, Direction.NORTH, view);
@@ -150,7 +198,7 @@ public class SimpleBakedModelRenderer {
                 CUBE_NORMALS[4] = extractViewableNormal(mat, Direction.WEST, view);
                 CUBE_NORMALS[5] = extractViewableNormal(mat, Direction.EAST, view);
             }
-        } else {
+        } else { // cull item in GUI
             CUBE_NORMALS[0] = extractViewableNormalGUI(mat, Direction.DOWN, gui);
             CUBE_NORMALS[1] = extractViewableNormalGUI(mat, Direction.UP, gui);
             CUBE_NORMALS[2] = extractViewableNormalGUI(mat, Direction.NORTH, gui);
