@@ -1,6 +1,7 @@
 package com.moepus.flerovium.functions;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
 import net.caffeinemc.mods.sodium.api.util.NormI8;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.vertex.format.common.ModelVertex;
@@ -47,7 +48,7 @@ public class SimpleBakedModelRenderer {
                 z = mat.m12();
             }
             case NORTH -> {
-                if (gui.rotation.x() == 0) return 0;
+                if (gui.rotation.x() == 0 && gui.rotation.y() == 0) return 0;
                 x = -mat.m20();
                 y = -mat.m21();
                 z = -mat.m22();
@@ -64,6 +65,7 @@ public class SimpleBakedModelRenderer {
                 if (gui.rotation.x() == 30f && gui.rotation.z() == 0) {
                     if (gui.rotation.y() == 225f) return 0;
                 }
+                if (gui.rotation.x() == 0) return 0;
                 x = -mat.m00();
                 y = -mat.m01();
                 z = -mat.m02();
@@ -72,6 +74,7 @@ public class SimpleBakedModelRenderer {
                 if (gui.rotation.x() == 30f && gui.rotation.z() == 0) {
                     if (gui.rotation.y() == 135f) return 0;
                 }
+                if (gui.rotation.x() == 0) return 0;
                 x = mat.m00();
                 y = mat.m01();
                 z = mat.m02();
@@ -230,6 +233,7 @@ public class SimpleBakedModelRenderer {
             if (normal == 0) continue;
             int color = isNotEmpty && bakedQuad.getTintIndex() != -1 ? GetItemTint(bakedQuad.getTintIndex(), itemStack, itemColors) : -1;
             putBulkData(writer, pose, bakedQuad, light, overlay, normal, color);
+            SpriteUtil.markSpriteActive(bakedQuad.getSprite());
         }
     }
 
