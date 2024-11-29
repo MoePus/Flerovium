@@ -1,10 +1,13 @@
 package com.moepus.flerovium.functions;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import me.jellysquid.mods.sodium.client.model.color.interop.ItemColorsExtended;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
+import net.caffeinemc.mods.sodium.api.util.ColorARGB;
 import net.caffeinemc.mods.sodium.api.util.NormI8;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.vertex.format.common.ModelVertex;
+import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransform;
@@ -218,20 +221,19 @@ public class SimpleBakedModelRenderer {
         if (isBufferMax()) flush(writer);
     }
 
-    static public int GetItemTint(int tintIndex, ItemStack itemStack, ItemColors itemColors) {
+    static public int GetItemTint(int tintIndex, ItemStack itemStack, ItemColor colorProvider) {
         if (tintIndex == LAST_TINT_INDEX) return LAST_TINT;
-        int tint = itemColors.getColor(itemStack, tintIndex);
-        LAST_TINT = 0xff000000 | (tint >> 16 & 255) | (tint & 0xff00) | ((tint & 255) << 16);
+        int tint = colorProvider.getColor(itemStack, tintIndex);
+        LAST_TINT = ColorARGB.toABGR(tint, 255);
         LAST_TINT_INDEX = tintIndex;
         return LAST_TINT;
     }
 
-    static private void renderQuadList(PoseStack.Pose pose, VertexBufferWriter writer, List<BakedQuad> bakedQuads, int light, int overlay, ItemStack itemStack, ItemColors itemColors) {
-        boolean isNotEmpty = !itemStack.isEmpty();
+    static private void renderQuadList(PoseStack.Pose pose, VertexBufferWriter writer, List<BakedQuad> bakedQuads, int light, int overlay, ItemStack itemStack, ItemColor colorProvider) {
         for (BakedQuad bakedQuad : bakedQuads) {
             int normal = CUBE_NORMALS[bakedQuad.getDirection().ordinal()];
             if (normal == 0) continue;
-            int color = isNotEmpty && bakedQuad.getTintIndex() != -1 ? GetItemTint(bakedQuad.getTintIndex(), itemStack, itemColors) : -1;
+            int color = colorProvider != null && bakedQuad.getTintIndex() != -1 ? GetItemTint(bakedQuad.getTintIndex(), itemStack, colorProvider) : -1;
             putBulkData(writer, pose, bakedQuad, light, overlay, normal, color);
             SpriteUtil.markSpriteActive(bakedQuad.getSprite());
         }
@@ -240,11 +242,13 @@ public class SimpleBakedModelRenderer {
     public static void render(BakedModel model, ItemStack itemStack, int packedLight, int packedOverlay, PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
         PoseStack.Pose pose = poseStack.last();
         prepareNormals(pose, model.getTransforms().gui);
+        ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtended) itemColors).sodium$getColorProvider(itemStack) : null;
+
         LAST_TINT_INDEX = LAST_TINT = -1;
         for (Direction direction : Direction.values()) {
-            renderQuadList(pose, writer, model.getQuads(null, direction, null), packedLight, packedOverlay, itemStack, itemColors);
+            renderQuadList(pose, writer, model.getQuads(null, direction, null), packedLight, packedOverlay, itemStack, colorProvider);
         }
-        renderQuadList(pose, writer, model.getQuads(null, null, null), packedLight, packedOverlay, itemStack, itemColors);
+        renderQuadList(pose, writer, model.getQuads(null, null, null), packedLight, packedOverlay, itemStack, colorProvider);
         flush(writer);
     }
 }
