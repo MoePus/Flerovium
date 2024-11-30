@@ -64,6 +64,8 @@ public abstract class ItemTransformMixin {
         }
         if (scale.x() == scale.y() && scale.y() == scale.z() && scale.x() > 0) {
             flerovium$scaleSameAndPositive = true;
+        } else if (scale.z() == 0) {
+            scale.z = 1E-5F; // Work Around for some MCR mods
         }
         if (rightRotation.equals(0, 0, 0)) {
             flerovium$noRightRot = true;
