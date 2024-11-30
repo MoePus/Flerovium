@@ -10,7 +10,6 @@ import net.caffeinemc.mods.sodium.api.vertex.format.common.ModelVertex;
 import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Math;
@@ -116,7 +115,7 @@ public class FastSimpleBakedModelRenderer {
         return NormI8.pack(x * scalar, y * scalar, z * scalar);
     }
 
-    public static void prepareNormals(FastSimpleBakedModel model, PoseStack.Pose pose, ItemTransform gui) {
+    public static void prepareNormals(FastSimpleBakedModel model, PoseStack.Pose pose) {
         Matrix4f mat = pose.pose();
 
         if (model.isNeedExtraCulling()) {
@@ -219,7 +218,7 @@ public class FastSimpleBakedModelRenderer {
 
     public static void render(FastSimpleBakedModel model, ItemStack itemStack, int packedLight, int packedOverlay, PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
         PoseStack.Pose pose = poseStack.last();
-        prepareNormals(model, pose, model.getTransforms().gui);
+        prepareNormals(model, pose);
         ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtended) itemColors).sodium$getColorProvider(itemStack) : null;
 
         LAST_TINT_INDEX = LAST_TINT = -1;
