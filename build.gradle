@@ -144,10 +144,8 @@ repositories {
     // flatDir {
     //     dir 'libs'
     // }
-    repositories {
-        maven {
-            url "https://maven.blamejared.com"
-        }
+    maven {
+        url = "https://maven.blamejared.com"
     }
     maven {
         url = 'https://www.cursemaven.com'
@@ -155,19 +153,31 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    maven {
+        name = 'tterrag maven'
+        url = 'https://maven.tterrag.com/'
+    }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-    implementation fg.deobf("org.embeddedt:embeddium-${minecraft_version}:0.3.25-git-f6029e8+mc${minecraft_version}")
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.1"))
+    implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.4.1")) {
+        jarJar.ranged(it, "[0.4.1,)")
+    }
+    implementation fg.deobf("org.embeddedt:embeddium-${minecraft_version}:0.3.31-beta.53+mc${minecraft_version}")
     // runtimeOnly fg.deobf("curse.maven:moonlight-499980:5938277")
     // runtimeOnly fg.deobf("curse.maven:supplementaries-412082:5928556")
     // runtimeOnly fg.deobf("curse.maven:ftbteams-404468:5267190")
     // runtimeOnly fg.deobf("curse.maven:ftblib-404465:5925398")
     // runtimeOnly fg.deobf("curse.maven:ftbquests-289412:5816794")
     // runtimeOnly fg.deobf("curse.maven:architectury-419699:5137938")
+    // runtimeOnly fg.deobf("curse.maven:simplyswords-659887:5639538")
+    // runtimeOnly fg.deobf("curse.maven:clothconfig-348521:5729105")
+    // runtimeOnly fg.deobf("curse.maven:create-328085:5838779")
+    // runtimeOnly fg.deobf("curse.maven:mek-268560:5919382")
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

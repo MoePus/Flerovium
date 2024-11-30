@@ -11,7 +11,6 @@ import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransform;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Math;
@@ -23,7 +22,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.util.List;
 
-public class SimpleBakedModelRenderer {
+public class FastSimpleBakedModelRenderer {
     private static final MemoryStack STACK = MemoryStack.create();
     private static final int VERTEX_COUNT = 4;
     private static final int BUFFER_VERTEX_COUNT = 48;
@@ -34,59 +33,6 @@ public class SimpleBakedModelRenderer {
     private static final int[] CUBE_NORMALS = new int[Direction.values().length];
     private static int LAST_TINT_INDEX = -1;
     private static int LAST_TINT = -1;
-
-    public static int extractViewableNormalGUI(Matrix4f mat, Direction direction, ItemTransform gui) {
-        float x = 0, y = 0, z = 0;
-        switch (direction) {
-            case DOWN -> {
-                if (gui.rotation.z() == 0) return 0;
-                x = -mat.m10();
-                y = -mat.m11();
-                z = -mat.m12();
-            }
-            case UP -> {
-                if (gui.rotation.x() == 0) return 0;
-                x = mat.m10();
-                y = mat.m11();
-                z = mat.m12();
-            }
-            case NORTH -> {
-                if (gui.rotation.x() == 0 && gui.rotation.y() == 0) return 0;
-                x = -mat.m20();
-                y = -mat.m21();
-                z = -mat.m22();
-            }
-            case SOUTH -> {
-                if (gui.rotation.x() == 30f && gui.rotation.z() == 0) {
-                    if (gui.rotation.y() == 135f || gui.rotation.y() == 225f) return 0;
-                }
-                x = mat.m20();
-                y = mat.m21();
-                z = mat.m22();
-            }
-            case WEST -> {
-                if (gui.rotation.x() == 30f && gui.rotation.z() == 0) {
-                    if (gui.rotation.y() == 225f) return 0;
-                }
-                if (gui.rotation.x() == 0) return 0;
-                x = -mat.m00();
-                y = -mat.m01();
-                z = -mat.m02();
-            }
-            case EAST -> {
-                if (gui.rotation.x() == 30f && gui.rotation.z() == 0) {
-                    if (gui.rotation.y() == 135f) return 0;
-                }
-                if (gui.rotation.x() == 0) return 0;
-                x = mat.m00();
-                y = mat.m01();
-                z = mat.m02();
-            }
-        }
-
-        float scalar = Math.invsqrt(Math.fma(x, x, Math.fma(y, y, z * z)));
-        return NormI8.pack(x * scalar, y * scalar, z * scalar);
-    }
 
     public static int extractViewableNormal(Matrix4f mat, Direction direction, Vector3f view) {
         float x = 0, y = 0, z = 0;
@@ -170,42 +116,26 @@ public class SimpleBakedModelRenderer {
         return NormI8.pack(x * scalar, y * scalar, z * scalar);
     }
 
-    public static void prepareNormals(PoseStack.Pose pose, ItemTransform gui) {
+    public static void prepareNormals(FastSimpleBakedModel model, PoseStack.Pose pose, ItemTransform gui) {
         Matrix4f mat = pose.pose();
-        if (mat.m32() < 0) {
-            if (gui.scale.x < 0.5F) { // no cull for big item
-                CUBE_NORMALS[0] = extractNormal(mat, Direction.DOWN);
-                CUBE_NORMALS[1] = extractNormal(mat, Direction.UP);
-                CUBE_NORMALS[2] = extractNormal(mat, Direction.NORTH);
-                CUBE_NORMALS[3] = extractNormal(mat, Direction.SOUTH);
-                CUBE_NORMALS[4] = extractNormal(mat, Direction.WEST);
-                CUBE_NORMALS[5] = extractNormal(mat, Direction.EAST);
-                return;
-            }
+
+        if (model.isNeedExtraCulling()) {
             Vector3f view = new Vector3f(mat.m30(), mat.m31(), mat.m32()).normalize();
-            if (mat.m32() <= -16.0f && gui.rotation.x == 0) { // render only front and backside for far away items
-                CUBE_NORMALS[0] = 0;
-                CUBE_NORMALS[1] = 0;
-                CUBE_NORMALS[2] = extractViewableNormal(mat, Direction.NORTH, view);
-                CUBE_NORMALS[3] = extractViewableNormal(mat, Direction.SOUTH, view);
-                CUBE_NORMALS[4] = 0;
-                CUBE_NORMALS[5] = 0;
-            } else { // normal backface culling
-                CUBE_NORMALS[0] = extractViewableNormal(mat, Direction.DOWN, view);
-                CUBE_NORMALS[1] = extractViewableNormal(mat, Direction.UP, view);
-                CUBE_NORMALS[2] = extractViewableNormal(mat, Direction.NORTH, view);
-                CUBE_NORMALS[3] = extractViewableNormal(mat, Direction.SOUTH, view);
-                CUBE_NORMALS[4] = extractViewableNormal(mat, Direction.WEST, view);
-                CUBE_NORMALS[5] = extractViewableNormal(mat, Direction.EAST, view);
-            }
-        } else { // cull item in GUI
-            CUBE_NORMALS[0] = extractViewableNormalGUI(mat, Direction.DOWN, gui);
-            CUBE_NORMALS[1] = extractViewableNormalGUI(mat, Direction.UP, gui);
-            CUBE_NORMALS[2] = extractViewableNormalGUI(mat, Direction.NORTH, gui);
-            CUBE_NORMALS[3] = extractViewableNormalGUI(mat, Direction.SOUTH, gui);
-            CUBE_NORMALS[4] = extractViewableNormalGUI(mat, Direction.WEST, gui);
-            CUBE_NORMALS[5] = extractViewableNormalGUI(mat, Direction.EAST, gui);
+            CUBE_NORMALS[0] = model.shouldRenderFace(Direction.DOWN) ? extractViewableNormal(mat, Direction.DOWN, view) : 0;
+            CUBE_NORMALS[1] = model.shouldRenderFace(Direction.UP) ? extractViewableNormal(mat, Direction.UP, view) : 0;
+            CUBE_NORMALS[2] = model.shouldRenderFace(Direction.NORTH) ? extractViewableNormal(mat, Direction.NORTH, view) : 0;
+            CUBE_NORMALS[3] = model.shouldRenderFace(Direction.SOUTH) ? extractViewableNormal(mat, Direction.SOUTH, view) : 0;
+            CUBE_NORMALS[4] = model.shouldRenderFace(Direction.WEST) ? extractViewableNormal(mat, Direction.WEST, view) : 0;
+            CUBE_NORMALS[5] = model.shouldRenderFace(Direction.EAST) ? extractViewableNormal(mat, Direction.EAST, view) : 0;
+            return;
         }
+
+        CUBE_NORMALS[0] = model.shouldRenderFace(Direction.DOWN) ? extractNormal(mat, Direction.DOWN) : 0;
+        CUBE_NORMALS[1] = model.shouldRenderFace(Direction.UP) ? extractNormal(mat, Direction.UP) : 0;
+        CUBE_NORMALS[2] = model.shouldRenderFace(Direction.NORTH) ? extractNormal(mat, Direction.NORTH) : 0;
+        CUBE_NORMALS[3] = model.shouldRenderFace(Direction.SOUTH) ? extractNormal(mat, Direction.SOUTH) : 0;
+        CUBE_NORMALS[4] = model.shouldRenderFace(Direction.WEST) ? extractNormal(mat, Direction.WEST) : 0;
+        CUBE_NORMALS[5] = model.shouldRenderFace(Direction.EAST) ? extractNormal(mat, Direction.EAST) : 0;
     }
 
     static int applyBakedNormals(Matrix3f mat, int baked) {
@@ -287,9 +217,9 @@ public class SimpleBakedModelRenderer {
         }
     }
 
-    public static void render(BakedModel model, ItemStack itemStack, int packedLight, int packedOverlay, PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
+    public static void render(FastSimpleBakedModel model, ItemStack itemStack, int packedLight, int packedOverlay, PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
         PoseStack.Pose pose = poseStack.last();
-        prepareNormals(pose, model.getTransforms().gui);
+        prepareNormals(model, pose, model.getTransforms().gui);
         ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtended) itemColors).sodium$getColorProvider(itemStack) : null;
 
         LAST_TINT_INDEX = LAST_TINT = -1;
