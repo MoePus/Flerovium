@@ -33,16 +33,16 @@ public class FastSimpleBakedModel implements BakedModel {
     private void DecideCull(ItemTransforms transforms, ItemDisplayContext itemDisplayContext, PoseStack.Pose pose) {
         if (itemDisplayContext == ItemDisplayContext.GUI) { // In GUI
             if (transforms.gui == ItemTransform.NO_TRANSFORM) { // Item
-                face[Direction.SOUTH.ordinal()] = true;
-                return;
-            }
-            if (transforms.gui.rotation.equals(30.0F, 225.0F, 0.0F)) { // Block
+                if (pose.pose().m20() == 0 && pose.pose().m21() == 0) { // Not per-transformed
+                    face[Direction.SOUTH.ordinal()] = true;
+                    return;
+                }
+            } else if (transforms.gui.rotation.equals(30.0F, 225.0F, 0.0F)) { // Block
                 face[Direction.UP.ordinal()] = true;
                 face[Direction.NORTH.ordinal()] = true;
                 face[Direction.EAST.ordinal()] = true;
                 return;
-            }
-            if (transforms.gui.rotation.equals(30.0F, 135.0F, 0.0F)) { // Block
+            } else if (transforms.gui.rotation.equals(30.0F, 135.0F, 0.0F)) { // Block
                 face[Direction.UP.ordinal()] = true;
                 face[Direction.NORTH.ordinal()] = true;
                 face[Direction.WEST.ordinal()] = true;
