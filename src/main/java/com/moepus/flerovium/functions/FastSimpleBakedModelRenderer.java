@@ -32,6 +32,7 @@ public class FastSimpleBakedModelRenderer {
     private static final int[] CUBE_NORMALS = new int[Direction.values().length];
     private static int LAST_TINT_INDEX = -1;
     private static int LAST_TINT = -1;
+    private static final int DONT_RENDER = -1;
 
     public static int extractViewableNormal(Matrix4f mat, Direction direction, Vector3f view) {
         float x = 0, y = 0, z = 0;
@@ -69,7 +70,7 @@ public class FastSimpleBakedModelRenderer {
         }
 
         if (view.dot(x, y, z) > 0.1f) {
-            return 0;
+            return DONT_RENDER;
         }
 
         float scalar = Math.invsqrt(Math.fma(x, x, Math.fma(y, y, z * z)));
@@ -120,21 +121,21 @@ public class FastSimpleBakedModelRenderer {
 
         if (model.isNeedExtraCulling()) {
             Vector3f view = new Vector3f(mat.m30(), mat.m31(), mat.m32()).normalize();
-            CUBE_NORMALS[0] = model.shouldRenderFace(Direction.DOWN) ? extractViewableNormal(mat, Direction.DOWN, view) : 0;
-            CUBE_NORMALS[1] = model.shouldRenderFace(Direction.UP) ? extractViewableNormal(mat, Direction.UP, view) : 0;
-            CUBE_NORMALS[2] = model.shouldRenderFace(Direction.NORTH) ? extractViewableNormal(mat, Direction.NORTH, view) : 0;
-            CUBE_NORMALS[3] = model.shouldRenderFace(Direction.SOUTH) ? extractViewableNormal(mat, Direction.SOUTH, view) : 0;
-            CUBE_NORMALS[4] = model.shouldRenderFace(Direction.WEST) ? extractViewableNormal(mat, Direction.WEST, view) : 0;
-            CUBE_NORMALS[5] = model.shouldRenderFace(Direction.EAST) ? extractViewableNormal(mat, Direction.EAST, view) : 0;
+            CUBE_NORMALS[0] = model.shouldRenderFace(Direction.DOWN) ? extractViewableNormal(mat, Direction.DOWN, view) : DONT_RENDER;
+            CUBE_NORMALS[1] = model.shouldRenderFace(Direction.UP) ? extractViewableNormal(mat, Direction.UP, view) : DONT_RENDER;
+            CUBE_NORMALS[2] = model.shouldRenderFace(Direction.NORTH) ? extractViewableNormal(mat, Direction.NORTH, view) : DONT_RENDER;
+            CUBE_NORMALS[3] = model.shouldRenderFace(Direction.SOUTH) ? extractViewableNormal(mat, Direction.SOUTH, view) : DONT_RENDER;
+            CUBE_NORMALS[4] = model.shouldRenderFace(Direction.WEST) ? extractViewableNormal(mat, Direction.WEST, view) : DONT_RENDER;
+            CUBE_NORMALS[5] = model.shouldRenderFace(Direction.EAST) ? extractViewableNormal(mat, Direction.EAST, view) : DONT_RENDER;
             return;
         }
 
-        CUBE_NORMALS[0] = model.shouldRenderFace(Direction.DOWN) ? extractNormal(mat, Direction.DOWN) : 0;
-        CUBE_NORMALS[1] = model.shouldRenderFace(Direction.UP) ? extractNormal(mat, Direction.UP) : 0;
-        CUBE_NORMALS[2] = model.shouldRenderFace(Direction.NORTH) ? extractNormal(mat, Direction.NORTH) : 0;
-        CUBE_NORMALS[3] = model.shouldRenderFace(Direction.SOUTH) ? extractNormal(mat, Direction.SOUTH) : 0;
-        CUBE_NORMALS[4] = model.shouldRenderFace(Direction.WEST) ? extractNormal(mat, Direction.WEST) : 0;
-        CUBE_NORMALS[5] = model.shouldRenderFace(Direction.EAST) ? extractNormal(mat, Direction.EAST) : 0;
+        CUBE_NORMALS[0] = model.shouldRenderFace(Direction.DOWN) ? extractNormal(mat, Direction.DOWN) : DONT_RENDER;
+        CUBE_NORMALS[1] = model.shouldRenderFace(Direction.UP) ? extractNormal(mat, Direction.UP) : DONT_RENDER;
+        CUBE_NORMALS[2] = model.shouldRenderFace(Direction.NORTH) ? extractNormal(mat, Direction.NORTH) : DONT_RENDER;
+        CUBE_NORMALS[3] = model.shouldRenderFace(Direction.SOUTH) ? extractNormal(mat, Direction.SOUTH) : DONT_RENDER;
+        CUBE_NORMALS[4] = model.shouldRenderFace(Direction.WEST) ? extractNormal(mat, Direction.WEST) : DONT_RENDER;
+        CUBE_NORMALS[5] = model.shouldRenderFace(Direction.EAST) ? extractNormal(mat, Direction.EAST) : DONT_RENDER;
     }
 
     static int applyBakedNormals(Matrix3f mat, int baked) {
@@ -209,7 +210,7 @@ public class FastSimpleBakedModelRenderer {
     static private void renderQuadList(PoseStack.Pose pose, VertexBufferWriter writer, List<BakedQuad> bakedQuads, int light, int overlay, ItemStack itemStack, ItemColor colorProvider) {
         for (BakedQuad bakedQuad : bakedQuads) {
             int normal = CUBE_NORMALS[bakedQuad.getDirection().ordinal()];
-            if (normal == 0) continue;
+            if (normal == DONT_RENDER) continue;
             int color = colorProvider != null && bakedQuad.getTintIndex() != -1 ? GetItemTint(bakedQuad.getTintIndex(), itemStack, colorProvider) : -1;
             putBulkData(writer, pose, bakedQuad, light, overlay, normal, color);
             SpriteUtil.markSpriteActive(bakedQuad.getSprite());
