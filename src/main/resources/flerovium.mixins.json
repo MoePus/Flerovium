@@ -11,7 +11,8 @@
   "client": [
     "Item.ItemEntityRenderMixin",
     "Item.ItemRendererMixin",
-    "Item.ItemTransformMixin"
+    "Item.ItemTransformMixin",
+    "Particle.SingleQuadParticleMixin"
   ],
   "injectors": {
     "defaultRequire": 1
