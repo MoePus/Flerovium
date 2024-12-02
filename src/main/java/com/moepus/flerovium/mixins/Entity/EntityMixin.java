@@ -1,4 +1,4 @@
-package com.moepus.flerovium.mixins;
+package com.moepus.flerovium.mixins.Entity;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;

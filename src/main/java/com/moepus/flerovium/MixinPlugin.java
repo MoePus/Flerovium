@@ -22,7 +22,7 @@ public class MixinPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         return switch (mixinClassName) {
-            case "com.moepus.flerovium.mixins.EntityMixin" -> FMLLoader.getDist() == Dist.CLIENT;
+            case "com.moepus.flerovium.mixins.Entity.EntityMixin" -> FMLLoader.getDist() == Dist.CLIENT;
             default -> true;
         };
     }

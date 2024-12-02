@@ -1,4 +1,4 @@
-package com.moepus.flerovium.mixins;
+package com.moepus.flerovium.mixins.Item;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;

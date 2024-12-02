@@ -6,12 +6,12 @@
   "refmap": "flerovium.refmap.json",
   "plugin": "com.moepus.flerovium.MixinPlugin",
   "mixins": [
-    "EntityMixin"
+    "Entity.EntityMixin"
   ],
   "client": [
-    "ItemEntityRenderMixin",
-    "ItemRendererMixin",
-    "ItemTransformMixin"
+    "Item.ItemEntityRenderMixin",
+    "Item.ItemRendererMixin",
+    "Item.ItemTransformMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,4 +1,4 @@
-package com.moepus.flerovium.mixins;
+package com.moepus.flerovium.mixins.Item;
 
 import com.moepus.flerovium.functions.FastSimpleBakedModel;
 import com.moepus.flerovium.functions.FastSimpleBakedModelRenderer;
