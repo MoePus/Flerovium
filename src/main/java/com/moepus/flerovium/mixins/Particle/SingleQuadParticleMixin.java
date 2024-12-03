@@ -10,7 +10,7 @@ import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Quaternionf;
+import org.joml.Math;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -49,7 +49,7 @@ public abstract class SingleQuadParticleMixin extends Particle {
 
     @Unique
     private int flerovium$getLightColorCached(float pt, int tickCount) {
-        if(tickCount == flerovium$lastTick) {
+        if (tickCount == flerovium$lastTick) {
             return flerovium$cachedLight;
         }
         flerovium$lastTick = tickCount;
@@ -68,13 +68,6 @@ public abstract class SingleQuadParticleMixin extends Particle {
         float x = (float) (Mth.lerp(pt, this.xo, this.x) - camPos.x());
         float y = (float) (Mth.lerp(pt, this.yo, this.y) - camPos.y());
         float z = (float) (Mth.lerp(pt, this.zo, this.z) - camPos.z());
-        Quaternionf q;
-        if (this.roll == 0.0F) {
-            q = camera.rotation();
-        } else {
-            q = new Quaternionf(camera.rotation());
-            q.rotateZ(Mth.lerp(pt, this.oRoll, this.roll));
-        }
 
         float minU = this.getU0();
         float maxU = this.getU1();
@@ -84,17 +77,26 @@ public abstract class SingleQuadParticleMixin extends Particle {
         float size = this.getQuadSize(pt);
         int color = ColorABGR.pack(this.rCol, this.gCol, this.bCol, this.alpha);
 
-        final float qxx = q.x * q.x, qyy = q.y * q.y, qzz = q.z * q.z, qww = q.w * q.w;
-        final float qxy = q.x * q.y, qxz = q.x * q.z, qyz = q.y * q.z, qxw = q.x * q.w;
-        final float qzw = q.z * q.w, qyw = q.y * q.w, qk = 1 / (qxx + qyy + qzz + qww);
+        float v1x = camera.getLeftVector().x, v1y = camera.getLeftVector().y, v1z = camera.getLeftVector().z;
+        float v2x = camera.getUpVector().x, v2y = camera.getUpVector().y, v2z = camera.getUpVector().z;
+        if (roll != 0) {
+            float nroll = Mth.lerp(pt, this.oRoll, this.roll);
+            float sinRoll = Math.sin(nroll);
+            float cosRoll = Math.cosFromSin(sinRoll, nroll);
 
-        final float v1x = (qxx - qyy - qzz + qww) * qk;
-        final float v1y = 2 * (qxy + qzw) * qk;
-        final float v1z = 2 * (qxz - qyw) * qk;
-
-        final float v2x = 2 * (qxy - qzw) * qk;
-        final float v2y = (qyy - qxx - qzz + qww) * qk;
-        final float v2z = 2 * (qyz + qxw) * qk;
+            float rv1x = Math.fma(cosRoll, v1x, sinRoll * v2x),
+                    rv1y = Math.fma(cosRoll, v1y, sinRoll * v2y),
+                    rv1z = Math.fma(cosRoll, v1z, sinRoll * v2z);
+            float rv2x = Math.fma(-sinRoll, v1x, cosRoll * v2x),
+                    rv2y = Math.fma(-sinRoll, v1y, cosRoll * v2y),
+                    rv2z = Math.fma(-sinRoll, v1z, cosRoll * v2z);
+            v1x = rv1x;
+            v1y = rv1y;
+            v1z = rv1z;
+            v2x = rv2x;
+            v2y = rv2y;
+            v2z = rv2z;
+        }
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             long buffer = stack.nmalloc(4 * ParticleVertex.STRIDE);
@@ -114,5 +116,4 @@ public abstract class SingleQuadParticleMixin extends Particle {
             writer.push(stack, buffer, 4, ParticleVertex.FORMAT);
         }
     }
-
 }
