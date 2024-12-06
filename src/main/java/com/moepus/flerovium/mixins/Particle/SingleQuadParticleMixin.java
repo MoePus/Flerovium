@@ -78,7 +78,7 @@ public abstract class SingleQuadParticleMixin extends Particle {
         float maxU = this.getU1();
         float minV = this.getV0();
         float maxV = this.getV1();
-        int light = flerovium$getLightColorCached(pt, camera.getEntity().tickCount);
+        int light = flerovium$getLightColorCached(pt, camera);
         float size = this.getQuadSize(pt);
         int color = ColorABGR.pack(this.rCol, this.gCol, this.bCol, this.alpha);
 
