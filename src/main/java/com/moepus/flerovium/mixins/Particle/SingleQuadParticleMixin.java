@@ -48,7 +48,12 @@ public abstract class SingleQuadParticleMixin extends Particle {
     int flerovium$cachedLight = 0;
 
     @Unique
-    private int flerovium$getLightColorCached(float pt, int tickCount) {
+    private int flerovium$getLightColorCached(float pt, Camera camera) {
+        if (camera.getEntity() == null)
+            return getLightColor(pt);
+        int tickCount = camera.getEntity().tickCount;
+        if (tickCount == 0)
+            return getLightColor(pt);
         if (tickCount == flerovium$lastTick) {
             return flerovium$cachedLight;
         }
