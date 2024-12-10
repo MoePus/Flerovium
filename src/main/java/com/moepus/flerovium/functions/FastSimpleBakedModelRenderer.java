@@ -34,119 +34,57 @@ public class FastSimpleBakedModelRenderer {
     private static int LAST_TINT = -1;
     private static final int DONT_RENDER = -1;
 
-    public static int extractViewableNormal(Matrix4f mat, Direction direction, Vector3f view) {
-        float x = 0, y = 0, z = 0;
-        switch (direction) {
-            case DOWN -> {
-                x = -mat.m10();
-                y = -mat.m11();
-                z = -mat.m12();
-            }
-            case UP -> {
-                x = mat.m10();
-                y = mat.m11();
-                z = mat.m12();
-            }
-            case NORTH -> {
-                x = -mat.m20();
-                y = -mat.m21();
-                z = -mat.m22();
-            }
-            case SOUTH -> {
-                x = mat.m20();
-                y = mat.m21();
-                z = mat.m22();
-            }
-            case WEST -> {
-                x = -mat.m00();
-                y = -mat.m01();
-                z = -mat.m02();
-            }
-            case EAST -> {
-                x = mat.m00();
-                y = mat.m01();
-                z = mat.m02();
-            }
-        }
+    private static int packUnsafe(float x, float y, float z) {
+        int normX = (int) (x * 127.0f) & 255;
+        int normY = (int) (y * 127.0f) & 255;
+        int normZ = (int) (z * 127.0f) & 255;
 
-        if (view.dot(x, y, z) > 0.1f) {
-            return DONT_RENDER;
-        }
-
-        float scalar = Math.invsqrt(Math.fma(x, x, Math.fma(y, y, z * z)));
-        return NormI8.pack(x * scalar, y * scalar, z * scalar);
+        return (normZ << 16) | (normY << 8) | normX;
     }
 
-    public static int extractNormal(Matrix4f mat, Direction direction) {
-        float x = 0, y = 0, z = 0;
-        switch (direction) {
-            case DOWN -> {
-                x = -mat.m10();
-                y = -mat.m11();
-                z = -mat.m12();
-            }
-            case UP -> {
-                x = mat.m10();
-                y = mat.m11();
-                z = mat.m12();
-            }
-            case NORTH -> {
-                x = -mat.m20();
-                y = -mat.m21();
-                z = -mat.m22();
-            }
-            case SOUTH -> {
-                x = mat.m20();
-                y = mat.m21();
-                z = mat.m22();
-            }
-            case WEST -> {
-                x = -mat.m00();
-                y = -mat.m01();
-                z = -mat.m02();
-            }
-            case EAST -> {
-                x = mat.m00();
-                y = mat.m01();
-                z = mat.m02();
-            }
-        }
-
+    public static int normal2Int(float x, float y, float z) {
         float scalar = Math.invsqrt(Math.fma(x, x, Math.fma(y, y, z * z)));
-        return NormI8.pack(x * scalar, y * scalar, z * scalar);
+        return packUnsafe(x * scalar, y * scalar, z * scalar);
+    }
+
+    public static boolean cullBackFace(byte viewX, byte viewY, byte viewZ, int normal) {
+        byte normalX = (byte) normal;
+        byte normalY = (byte) (normal >> 8);
+        byte normalZ = (byte) (normal >> 16);
+        return (int) viewX * (int) normalX + (int) viewY * (int) normalY + (int) viewZ * (int) normalZ > 768;
     }
 
     public static void prepareNormals(FastSimpleBakedModel model, PoseStack.Pose pose) {
         Matrix4f mat = pose.pose();
 
-        if (model.isNeedExtraCulling()) {
-            Vector3f view = new Vector3f(mat.m30(), mat.m31(), mat.m32()).normalize();
-            CUBE_NORMALS[0] = model.shouldRenderFace(Direction.DOWN) ? extractViewableNormal(mat, Direction.DOWN, view) : DONT_RENDER;
-            CUBE_NORMALS[1] = model.shouldRenderFace(Direction.UP) ? extractViewableNormal(mat, Direction.UP, view) : DONT_RENDER;
-            CUBE_NORMALS[2] = model.shouldRenderFace(Direction.NORTH) ? extractViewableNormal(mat, Direction.NORTH, view) : DONT_RENDER;
-            CUBE_NORMALS[3] = model.shouldRenderFace(Direction.SOUTH) ? extractViewableNormal(mat, Direction.SOUTH, view) : DONT_RENDER;
-            CUBE_NORMALS[4] = model.shouldRenderFace(Direction.WEST) ? extractViewableNormal(mat, Direction.WEST, view) : DONT_RENDER;
-            CUBE_NORMALS[5] = model.shouldRenderFace(Direction.EAST) ? extractViewableNormal(mat, Direction.EAST, view) : DONT_RENDER;
-            return;
-        }
+        CUBE_NORMALS[0] = model.shouldRenderFace(Direction.DOWN) ? normal2Int(-mat.m10(), -mat.m11(), -mat.m12()) : DONT_RENDER;
+        CUBE_NORMALS[1] = model.shouldRenderFace(Direction.UP) ? normal2Int(mat.m10(), mat.m11(), mat.m12()) : DONT_RENDER;
+        CUBE_NORMALS[2] = model.shouldRenderFace(Direction.NORTH) ? normal2Int(-mat.m20(), -mat.m21(), -mat.m22()) : DONT_RENDER;
+        CUBE_NORMALS[3] = model.shouldRenderFace(Direction.SOUTH) ? normal2Int(mat.m20(), mat.m21(), mat.m22()) : DONT_RENDER;
+        CUBE_NORMALS[4] = model.shouldRenderFace(Direction.WEST) ? normal2Int(-mat.m00(), -mat.m01(), -mat.m02()) : DONT_RENDER;
+        CUBE_NORMALS[5] = model.shouldRenderFace(Direction.EAST) ? normal2Int(mat.m00(), mat.m01(), mat.m02()) : DONT_RENDER;
 
-        CUBE_NORMALS[0] = model.shouldRenderFace(Direction.DOWN) ? extractNormal(mat, Direction.DOWN) : DONT_RENDER;
-        CUBE_NORMALS[1] = model.shouldRenderFace(Direction.UP) ? extractNormal(mat, Direction.UP) : DONT_RENDER;
-        CUBE_NORMALS[2] = model.shouldRenderFace(Direction.NORTH) ? extractNormal(mat, Direction.NORTH) : DONT_RENDER;
-        CUBE_NORMALS[3] = model.shouldRenderFace(Direction.SOUTH) ? extractNormal(mat, Direction.SOUTH) : DONT_RENDER;
-        CUBE_NORMALS[4] = model.shouldRenderFace(Direction.WEST) ? extractNormal(mat, Direction.WEST) : DONT_RENDER;
-        CUBE_NORMALS[5] = model.shouldRenderFace(Direction.EAST) ? extractNormal(mat, Direction.EAST) : DONT_RENDER;
+        if (model.isNeedExtraCulling()) {
+            float scalar = 127 * Math.invsqrt(Math.fma(mat.m30(), mat.m30(), Math.fma(mat.m31(), mat.m31(), mat.m32() * mat.m32())));
+            byte viewX = (byte) (mat.m30() * scalar);
+            byte viewY = (byte) (mat.m31() * scalar);
+            byte viewZ = (byte) (mat.m32() * scalar);
+            for (int i = 0; i < 6; i++) {
+                if (CUBE_NORMALS[i] != DONT_RENDER && cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[i])) {
+                    CUBE_NORMALS[i] = DONT_RENDER;
+                }
+            }
+        }
     }
 
-    static int applyBakedNormals(Matrix3f mat, int baked) {
-        if (baked == 0x7f) return NormI8.pack(mat.m00, mat.m01, mat.m02);
-        if (baked == 0x81) return NormI8.pack(-mat.m00, -mat.m01, -mat.m02);
-        if (baked == 0x7f0000) return NormI8.pack(mat.m20, mat.m21, mat.m22);
-        if (baked == 0x810000) return NormI8.pack(-mat.m20, -mat.m21, -mat.m22);
-        if (baked == 0x7f00) return NormI8.pack(mat.m10, mat.m11, mat.m12);
-        if (baked == 0x8100) return NormI8.pack(-mat.m10, -mat.m11, -mat.m12);
-
-        if (baked == 0) return 0;
+    private static int getQuadNormal(Matrix3f mat, int baked, int dir_normal) {
+        if (baked == 0x7f0000) return packUnsafe(mat.m20, mat.m21, mat.m22); // South
+        if (baked == 0x810000) return packUnsafe(-mat.m20, -mat.m21, -mat.m22); // North
+        if (baked == 0x7f) return packUnsafe(mat.m00, mat.m01, mat.m02); // East
+        if (baked == 0x81) return packUnsafe(-mat.m00, -mat.m01, -mat.m02); // West
+        if (baked == 0x7f00) return packUnsafe(mat.m10, mat.m11, mat.m12); // Up
+        if (baked == 0x8100) return packUnsafe(-mat.m10, -mat.m11, -mat.m12); // Down
+        if (baked == 0) return dir_normal;
 
         Vector3f normal = new Vector3f(NormI8.unpackX(baked), NormI8.unpackY(baked), NormI8.unpackZ(baked));
         normal.mul(mat);
@@ -163,7 +101,7 @@ public class FastSimpleBakedModelRenderer {
         return r | (b & 0xff000000);
     }
 
-    static void flush(VertexBufferWriter writer) {
+    private static void flush(VertexBufferWriter writer) {
         if (BUFFED_VERTEX == 0) return;
         STACK.push();
         writer.push(STACK, SCRATCH_BUFFER, BUFFED_VERTEX, ModelVertex.FORMAT);
@@ -172,34 +110,34 @@ public class FastSimpleBakedModelRenderer {
         BUFFED_VERTEX = 0;
     }
 
-    static boolean isBufferMax() {
+    private static boolean isBufferMax() {
         return BUFFED_VERTEX >= BUFFER_VERTEX_COUNT;
     }
 
-    static private void putBulkData(VertexBufferWriter writer, PoseStack.Pose pose, BakedQuad bakedQuad, int light, int overlay, int normal, int color) {
+    private static void putBulkData(VertexBufferWriter writer, PoseStack.Pose pose, BakedQuad bakedQuad, int light, int overlay, int normal, int color) {
         int[] vertices = bakedQuad.getVertices();
+        if (vertices.length != VERTEX_COUNT * STRIDE) return;
         Matrix4f pose_matrix = pose.pose();
-
-        if (VERTEX_COUNT != vertices.length / 8) return;
-
-        Vector3f pos = new Vector3f();
-        for (int reader = 0; reader < STRIDE * VERTEX_COUNT; reader += STRIDE) {
-            pos.set(Float.intBitsToFloat(vertices[reader]), Float.intBitsToFloat(vertices[reader + 1]), Float.intBitsToFloat(vertices[reader + 2])).mulPosition(pose_matrix);
-            int c = color != -1 ? multiplyIntBytes(color, vertices[reader + 3]) : vertices[reader + 3];
-            float u = Float.intBitsToFloat(vertices[reader + 4]);
-            float v = Float.intBitsToFloat(vertices[reader + 5]);
-            int baked = vertices[reader + 6];
-            int l = Math.max(((baked & 0xffff) << 16) | (baked >> 16), light);
-            int n = applyBakedNormals(pose.normal(), vertices[reader + 7]);
-            ModelVertex.write(BUFFER_PTR, pos.x, pos.y, pos.z, c, u, v, overlay, l, n == 0 ? normal : n);
-            BUFFER_PTR += ModelVertex.STRIDE;
+        final int n = getQuadNormal(pose.normal(), vertices[7], normal);
+        final long buffer = BUFFER_PTR;
+        for (int index = 0; index < VERTEX_COUNT; index++) {
+            final int reader = index * STRIDE;
+            final float x = Float.intBitsToFloat(vertices[reader]), y = Float.intBitsToFloat(vertices[reader + 1]), z = Float.intBitsToFloat(vertices[reader + 2]);
+            final Vector3f pos = new Vector3f(x, y, z).mulPosition(pose_matrix);
+            final int c = color != -1 ? multiplyIntBytes(color, vertices[reader + 3]) : vertices[reader + 3];
+            final float u = Float.intBitsToFloat(vertices[reader + 4]);
+            final float v = Float.intBitsToFloat(vertices[reader + 5]);
+            final int baked = vertices[reader + 6];
+            final int l = Math.max(((baked & 0xffff) << 16) | (baked >> 16), light);
+            ModelVertex.write(buffer + index * ModelVertex.STRIDE, pos.x, pos.y, pos.z, c, u, v, overlay, l, n);
         }
 
+        BUFFER_PTR += ModelVertex.STRIDE * VERTEX_COUNT;
         BUFFED_VERTEX += VERTEX_COUNT;
         if (isBufferMax()) flush(writer);
     }
 
-    static public int GetItemTint(int tintIndex, ItemStack itemStack, ItemColor colorProvider) {
+    public static int GetItemTint(int tintIndex, ItemStack itemStack, ItemColor colorProvider) {
         if (tintIndex == LAST_TINT_INDEX) return LAST_TINT;
         int tint = colorProvider.getColor(itemStack, tintIndex);
         LAST_TINT = ColorARGB.toABGR(tint, 255);
@@ -207,13 +145,17 @@ public class FastSimpleBakedModelRenderer {
         return LAST_TINT;
     }
 
-    static private void renderQuadList(PoseStack.Pose pose, VertexBufferWriter writer, List<BakedQuad> bakedQuads, int light, int overlay, ItemStack itemStack, ItemColor colorProvider) {
+    private static void renderQuadList(PoseStack.Pose pose, VertexBufferWriter writer, List<BakedQuad> bakedQuads, int light, int overlay, ItemStack itemStack, ItemColor colorProvider) {
         for (BakedQuad bakedQuad : bakedQuads) {
             int normal = CUBE_NORMALS[bakedQuad.getDirection().ordinal()];
             if (normal == DONT_RENDER) continue;
             int color = colorProvider != null && bakedQuad.getTintIndex() != -1 ? GetItemTint(bakedQuad.getTintIndex(), itemStack, colorProvider) : -1;
             putBulkData(writer, pose, bakedQuad, light, overlay, normal, color);
-            SpriteUtil.markSpriteActive(bakedQuad.getSprite());
+        }
+        if (pose.pose().m32() > -8.0F) { // Do animation for item in GUI or nearby in world
+            for (BakedQuad bakedQuad : bakedQuads) {
+                SpriteUtil.markSpriteActive(bakedQuad.getSprite());
+            }
         }
     }
 
@@ -227,6 +169,7 @@ public class FastSimpleBakedModelRenderer {
             renderQuadList(pose, writer, model.getQuads(null, direction, null), packedLight, packedOverlay, itemStack, colorProvider);
         }
         renderQuadList(pose, writer, model.getQuads(null, null, null), packedLight, packedOverlay, itemStack, colorProvider);
+
         flush(writer);
     }
 }

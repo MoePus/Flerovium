@@ -12,6 +12,7 @@
     "Item.ItemEntityRenderMixin",
     "Item.ItemRendererMixin",
     "Item.ItemTransformMixin",
+    "Item.SimpleBakedModelMixin",
     "Particle.ParticleEngineMixin",
     "Particle.ParticleMixin",
     "Particle.SingleQuadParticleMixin"
