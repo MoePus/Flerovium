@@ -21,6 +21,8 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.util.List;
 
+import static com.moepus.flerovium.functions.MathUtil.*;
+
 public class FastSimpleBakedModelRenderer {
     private static final MemoryStack STACK = MemoryStack.create();
     private static final int VERTEX_COUNT = 4;
@@ -33,26 +35,6 @@ public class FastSimpleBakedModelRenderer {
     private static int LAST_TINT_INDEX = -1;
     private static int LAST_TINT = -1;
     private static final int DONT_RENDER = -1;
-
-    private static int packUnsafe(float x, float y, float z) {
-        int normX = (int) (x * 127.0f) & 255;
-        int normY = (int) (y * 127.0f) & 255;
-        int normZ = (int) (z * 127.0f) & 255;
-
-        return (normZ << 16) | (normY << 8) | normX;
-    }
-
-    public static int normal2Int(float x, float y, float z) {
-        float scalar = Math.invsqrt(Math.fma(x, x, Math.fma(y, y, z * z)));
-        return packUnsafe(x * scalar, y * scalar, z * scalar);
-    }
-
-    public static boolean cullBackFace(byte viewX, byte viewY, byte viewZ, int normal) {
-        byte normalX = (byte) normal;
-        byte normalY = (byte) (normal >> 8);
-        byte normalZ = (byte) (normal >> 16);
-        return (int) viewX * (int) normalX + (int) viewY * (int) normalY + (int) viewZ * (int) normalZ > 768;
-    }
 
     public static void prepareNormals(FastSimpleBakedModel model, PoseStack.Pose pose) {
         Matrix4f mat = pose.pose();
