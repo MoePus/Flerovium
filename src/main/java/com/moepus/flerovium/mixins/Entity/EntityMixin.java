@@ -24,17 +24,4 @@ public abstract class EntityMixin {
             cir.setReturnValue(false);
         }
     }
-
-    @Redirect(
-            method = "collide",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/Level;getEntityCollisions(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;"
-            ),
-            require = 0
-    )
-    public List<VoxelShape> onGetEntityCollisions(Level instance, Entity entity, AABB aabb) {
-        if (instance.isClientSide) return List.of();
-        return instance.getEntityCollisions(entity, aabb);
-    }
 }

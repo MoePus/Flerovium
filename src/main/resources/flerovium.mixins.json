@@ -9,6 +9,7 @@
     "Entity.EntityMixin"
   ],
   "client": [
+    "Entity.ClientLevelMixin",
     "Entity.ModelPartMixin",
     "Item.ItemEntityRenderMixin",
     "Item.ItemRendererMixin",
