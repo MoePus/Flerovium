@@ -1,15 +1,11 @@
 package com.moepus.flerovium.mixins.Entity;
 
 import com.moepus.flerovium.functions.FastEntityRenderer;
-import com.mojang.blaze3d.platform.GlStateManager;
 import me.jellysquid.mods.sodium.client.model.ModelCuboidAccessor;
+import me.jellysquid.mods.sodium.client.render.immediate.model.ModelCuboid;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderStateShard;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.List;
-import java.util.Optional;
 
 @Mixin(ModelPart.class)
 public class ModelPartMixin {
