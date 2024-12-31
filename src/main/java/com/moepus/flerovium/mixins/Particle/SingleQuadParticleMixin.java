@@ -82,41 +82,73 @@ public abstract class SingleQuadParticleMixin extends Particle {
         float size = this.getQuadSize(pt);
         int color = ColorABGR.pack(this.rCol, this.gCol, this.bCol, this.alpha);
 
-        float v1x = camera.getLeftVector().x, v1y = camera.getLeftVector().y, v1z = camera.getLeftVector().z;
-        float v2x = camera.getUpVector().x, v2y = camera.getUpVector().y, v2z = camera.getUpVector().z;
+        float lx = camera.getLeftVector().x, ly = camera.getLeftVector().y, lz = camera.getLeftVector().z;
+        float ux = camera.getUpVector().x, uy = camera.getUpVector().y, uz = camera.getUpVector().z;
         if (roll != 0) {
+            // Manually rotate the left and up vectors by the roll angle
             float nroll = Mth.lerp(pt, this.oRoll, this.roll);
             float sinRoll = Math.sin(nroll);
             float cosRoll = Math.cosFromSin(sinRoll, nroll);
 
-            float rv1x = Math.fma(cosRoll, v1x, sinRoll * v2x),
-                    rv1y = Math.fma(cosRoll, v1y, sinRoll * v2y),
-                    rv1z = Math.fma(cosRoll, v1z, sinRoll * v2z);
-            float rv2x = Math.fma(-sinRoll, v1x, cosRoll * v2x),
-                    rv2y = Math.fma(-sinRoll, v1y, cosRoll * v2y),
-                    rv2z = Math.fma(-sinRoll, v1z, cosRoll * v2z);
-            v1x = rv1x;
-            v1y = rv1y;
-            v1z = rv1z;
-            v2x = rv2x;
-            v2y = rv2y;
-            v2z = rv2z;
+            float rv1x = Math.fma(cosRoll, lx, sinRoll * ux),
+                    rv1y = Math.fma(cosRoll, ly, sinRoll * uy),
+                    rv1z = Math.fma(cosRoll, lz, sinRoll * uz);
+            float rv2x = Math.fma(-sinRoll, lx, cosRoll * ux),
+                    rv2y = Math.fma(-sinRoll, ly, cosRoll * uy),
+                    rv2z = Math.fma(-sinRoll, lz, cosRoll * uz);
+            lx = rv1x;
+            ly = rv1y;
+            lz = rv1z;
+            ux = rv2x;
+            uy = rv2y;
+            uz = rv2z;
         }
 
+        /**
+         * Constructs a sprite's four vertices using the camera's leftVector and upVector.
+         *
+         *                  +---------------------+
+         *                  |                     |
+         *     (-left, +up) |         +up         | (+left, +up)
+         *                  |                     |
+         *          Vertex 2|          ^          | Vertex 3
+         *                  |          |          |
+         *                  |   <------+------>   |
+         *                  |       left          |
+         *                  |                     |
+         *     (-left, -up) |         -up         | (+left, -up)
+         *                  |                     |
+         *          Vertex 1|                     | Vertex 4
+         *                  +---------------------+
+         *
+         * The sprite lies in a plane defined by the camera's orientation. Using the
+         * size of the sprite (S), leftVector (L), and upVector (U), we calculate:
+         *
+         * Vertex 1: (L + U) * -S
+         * Vertex 2: (-L + U) * S
+         * Vertex 3: (L + U) * S
+         * Vertex 4: (-L + U) * -S
+         *
+         * Each vertex is then transformed to the world position of the sprite
+         * by adding the sprite's position (P).
+         *
+         * This approach avoids expensive quaternion operations and directly
+         * leverages the camera's orientation to efficiently calculate vertices.
+         */
         try (MemoryStack stack = MemoryStack.stackPush()) {
             long buffer = stack.nmalloc(4 * ParticleVertex.STRIDE);
             long ptr = buffer;
 
-            ParticleVertex.put(ptr, Math.fma(v1x + v2x, -size, x), Math.fma(v1y + v2y, -size, y), Math.fma(v1z + v2z, -size, z), maxU, maxV, color, light);
+            ParticleVertex.put(ptr, Math.fma(lx + ux, -size, x), Math.fma(ly + uy, -size, y), Math.fma(lz + uz, -size, z), maxU, maxV, color, light);
             ptr += ParticleVertex.STRIDE;
 
-            ParticleVertex.put(ptr, Math.fma(-v1x + v2x, size, x), Math.fma(-v1y + v2y, size, y), Math.fma(-v1z + v2z, size, z), maxU, minV, color, light);
+            ParticleVertex.put(ptr, Math.fma(-lx + ux, size, x), Math.fma(-ly + uy, size, y), Math.fma(-lz + uz, size, z), maxU, minV, color, light);
             ptr += ParticleVertex.STRIDE;
 
-            ParticleVertex.put(ptr, Math.fma(v1x + v2x, size, x), Math.fma(v1y + v2y, size, y), Math.fma(v1z + v2z, size, z), minU, minV, color, light);
+            ParticleVertex.put(ptr, Math.fma(lx + ux, size, x), Math.fma(ly + uy, size, y), Math.fma(lz + uz, size, z), minU, minV, color, light);
             ptr += ParticleVertex.STRIDE;
 
-            ParticleVertex.put(ptr, Math.fma(-v1x + v2x, -size, x), Math.fma(-v1y + v2y, -size, y), Math.fma(-v1z + v2z, -size, z), minU, maxV, color, light);
+            ParticleVertex.put(ptr, Math.fma(-lx + ux, -size, x), Math.fma(-ly + uy, -size, y), Math.fma(-lz + uz, -size, z), minU, maxV, color, light);
 
             writer.push(stack, buffer, 4, ParticleVertex.FORMAT);
         }

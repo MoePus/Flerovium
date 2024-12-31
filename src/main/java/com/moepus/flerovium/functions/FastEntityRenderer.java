@@ -141,6 +141,32 @@ public class FastEntityRenderer {
 
     private static void prepareVertices(PoseStack.Pose matrices, ModelCuboid cuboid) {
         Matrix4f pose = matrices.pose();
+
+        /**
+         *  Build a Cube from a Vertex and 3 Vectors
+         *
+         *  Using one vertex (P1) and three vectors (X, Y, Z):
+         *
+         *            P8 +----------------+ P7
+         *            /|                 /|
+         *           / |                / |
+         *        P4 +----------------+ P3|
+         *          |  |              |  |
+         *          |  |              |  |
+         *          |  P5 +-----------|--+ P6
+         *          | /               | /
+         *          |/                |/
+         *        P1 +----------------+ P2
+         *
+         *  Vertices:
+         *  P2 = P1 + X
+         *  P3 = P2 + Y
+         *  P4 = P1 + Y
+         *  P5 = P1 + Z
+         *  P6 = P2 + Z
+         *  P7 = P6 + Y
+         *  P8 = P5 + Y
+         */
         CUBE_CORNERS[VERTEX_X1_Y1_Z1].x = Math.fma(pose.m00(), cuboid.x1, Math.fma(pose.m10(), cuboid.y1, Math.fma(pose.m20(), cuboid.z1, pose.m30())));
         CUBE_CORNERS[VERTEX_X1_Y1_Z1].y = Math.fma(pose.m01(), cuboid.x1, Math.fma(pose.m11(), cuboid.y1, Math.fma(pose.m21(), cuboid.z1, pose.m31())));
         CUBE_CORNERS[VERTEX_X1_Y1_Z1].z = Math.fma(pose.m02(), cuboid.x1, Math.fma(pose.m12(), cuboid.y1, Math.fma(pose.m22(), cuboid.z1, pose.m32())));
