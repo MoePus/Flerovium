@@ -3,6 +3,7 @@ package com.moepus.flerovium.functions;
 import com.mojang.blaze3d.vertex.PoseStack;
 import me.jellysquid.mods.sodium.client.model.color.interop.ItemColorsExtended;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
+import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
 import net.caffeinemc.mods.sodium.api.util.ColorARGB;
 import net.caffeinemc.mods.sodium.api.util.NormI8;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
@@ -74,13 +75,10 @@ public class FastSimpleBakedModelRenderer {
     }
 
     public static int multiplyIntBytes(int a, int b) {
-        int r = 0;
-        for (int i = 0; i < 3; i++) {
-            int af = (a >>> (i * 8)) & 0xFF;
-            int bf = (b >>> (i * 8)) & 0xFF;
-            r |= ((af * bf + 127) / 255) << (i * 8);
-        }
-        return r | (b & 0xff000000);
+        int first = ((a & 0xff) * (b & 0xff) + 127) / 255;
+        int second = (((a >>> 8) & 0xff) * ((b >>> 8) & 0xff) + 127) / 255;
+        int third = (((a >>> 16) & 0xff) * ((b >>> 16) & 0xff) + 127) / 255;
+        return first | second << 8 | third << 16 | (b & 0xff000000);
     }
 
     private static void flush(VertexBufferWriter writer) {
@@ -105,13 +103,13 @@ public class FastSimpleBakedModelRenderer {
         for (int index = 0; index < VERTEX_COUNT; index++) {
             final int reader = index * STRIDE;
             final float x = Float.intBitsToFloat(vertices[reader]), y = Float.intBitsToFloat(vertices[reader + 1]), z = Float.intBitsToFloat(vertices[reader + 2]);
-            final Vector3f pos = new Vector3f(x, y, z).mulPosition(pose_matrix);
+            final float px = MatrixHelper.transformPositionX(pose_matrix, x, y, z), py = MatrixHelper.transformPositionY(pose_matrix, x, y, z), pz = MatrixHelper.transformPositionZ(pose_matrix, x, y, z);
             final int c = color != -1 ? multiplyIntBytes(color, vertices[reader + 3]) : vertices[reader + 3];
             final float u = Float.intBitsToFloat(vertices[reader + 4]);
             final float v = Float.intBitsToFloat(vertices[reader + 5]);
             final int baked = vertices[reader + 6];
             final int l = Math.max(((baked & 0xffff) << 16) | (baked >> 16), light);
-            ModelVertex.write(buffer + index * ModelVertex.STRIDE, pos.x, pos.y, pos.z, c, u, v, overlay, l, n);
+            ModelVertex.write(buffer + index * ModelVertex.STRIDE, px, py, pz, c, u, v, overlay, l, n);
         }
 
         BUFFER_PTR += ModelVertex.STRIDE * VERTEX_COUNT;
