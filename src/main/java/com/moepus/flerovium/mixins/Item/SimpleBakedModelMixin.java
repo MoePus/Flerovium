@@ -4,11 +4,10 @@ import com.moepus.flerovium.View.SimpleBakedModelView;
 import me.jellysquid.mods.sodium.client.model.quad.BakedQuadView;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.SimpleBakedModel;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
+import net.minecraftforge.client.RenderTypeHelper;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -21,7 +20,14 @@ public abstract class SimpleBakedModelMixin implements SimpleBakedModelView {
     @Shadow
     @Final
     protected List<BakedQuad> unculledFaces;
-
+    @Shadow(remap = false)
+    @Final
+    @Mutable
+    protected List<net.minecraft.client.renderer.RenderType> itemRenderTypes;
+    @Shadow(remap = false)
+    @Final
+    @Mutable
+    protected List<net.minecraft.client.renderer.RenderType> fabulousItemRenderTypes;
     @Unique
     private boolean flerovium$hasUnassignedFaces = false;
 
@@ -34,6 +40,24 @@ public abstract class SimpleBakedModelMixin implements SimpleBakedModelView {
                 break;
             }
         }
+    }
+
+    /**
+     * @author MoePus
+     * @reason Cache Render Types
+     */
+    @Overwrite(remap = false)
+    public List<net.minecraft.client.renderer.RenderType> getRenderTypes(net.minecraft.world.item.ItemStack itemStack, boolean fabulous) {
+        if (!fabulous) {
+            if (itemRenderTypes == null) {
+                itemRenderTypes = List.of(RenderTypeHelper.getFallbackItemRenderType(itemStack, (BakedModel) this, false));
+            }
+            return itemRenderTypes;
+        }
+        if (fabulousItemRenderTypes == null) {
+            fabulousItemRenderTypes = List.of(RenderTypeHelper.getFallbackItemRenderType(itemStack, (BakedModel) this, false));
+        }
+        return fabulousItemRenderTypes;
     }
 
     @Override
