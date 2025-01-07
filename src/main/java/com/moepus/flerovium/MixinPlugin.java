@@ -2,6 +2,7 @@ package com.moepus.flerovium;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.loading.FMLLoader;
+import net.minecraftforge.fml.loading.LoadingModList;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -19,10 +20,15 @@ public class MixinPlugin implements IMixinConfigPlugin {
         return null;
     }
 
+    private static boolean isModLoaded(String modId) {
+        return LoadingModList.get().getModFileById(modId) != null;
+    }
+
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         return switch (mixinClassName) {
             case "com.moepus.flerovium.mixins.Entity.EntityMixin" -> FMLLoader.getDist() == Dist.CLIENT;
+            case "com.moepus.flerovium.mixins.Entity.ModelPartMixin" -> !isModLoaded("bendylib");
             default -> true;
         };
     }
