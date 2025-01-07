@@ -37,6 +37,7 @@ public class FastSimpleBakedModelRenderer {
     private static int LAST_TINT = -1;
     private static final int DONT_RENDER = -1;
 
+
     public static void prepareNormals(FastSimpleBakedModel model, PoseStack.Pose pose) {
         Matrix4f mat = pose.pose();
 
@@ -46,6 +47,7 @@ public class FastSimpleBakedModelRenderer {
         CUBE_NORMALS[3] = model.shouldRenderFace(Direction.SOUTH) ? normal2Int(mat.m20(), mat.m21(), mat.m22()) : DONT_RENDER;
         CUBE_NORMALS[4] = model.shouldRenderFace(Direction.WEST) ? normal2Int(-mat.m00(), -mat.m01(), -mat.m02()) : DONT_RENDER;
         CUBE_NORMALS[5] = model.shouldRenderFace(Direction.EAST) ? normal2Int(mat.m00(), mat.m01(), mat.m02()) : DONT_RENDER;
+
 
         if (model.isNeedExtraCulling()) {
             float scalar = 127 * Math.invsqrt(Math.fma(mat.m30(), mat.m30(), Math.fma(mat.m31(), mat.m31(), mat.m32() * mat.m32())));
@@ -60,18 +62,20 @@ public class FastSimpleBakedModelRenderer {
         }
     }
 
-    private static int getQuadNormal(Matrix3f mat, int baked, int dir_normal) {
-        if (baked == 0x7f0000) return packUnsafe(mat.m20, mat.m21, mat.m22); // South
-        if (baked == 0x810000) return packUnsafe(-mat.m20, -mat.m21, -mat.m22); // North
-        if (baked == 0x7f) return packUnsafe(mat.m00, mat.m01, mat.m02); // East
-        if (baked == 0x81) return packUnsafe(-mat.m00, -mat.m01, -mat.m02); // West
-        if (baked == 0x7f00) return packUnsafe(mat.m10, mat.m11, mat.m12); // Up
-        if (baked == 0x8100) return packUnsafe(-mat.m10, -mat.m11, -mat.m12); // Down
-        if (baked == 0) return dir_normal;
+    private static int getQuadNormal(Matrix3f mat, int baked) {
+        final float factor = PACK_FACTOR[(baked & 0x808080) == 0 ? 0 : 1];
+        final int tmp = (baked - 0x7e7e7f) & 0xfdfdfd;
+        if((tmp & 0xff0000) == 0) return packUnsafe(mat.m20, mat.m21, mat.m22, factor); // South_North
+        if((tmp & 0xff) == 0) return packUnsafe(mat.m00, mat.m01, mat.m02, factor); // East_West
+        if((tmp & 0xff00) == 0) return packUnsafe(mat.m10, mat.m11, mat.m12, factor); // Up_Down
 
-        Vector3f normal = new Vector3f(NormI8.unpackX(baked), NormI8.unpackY(baked), NormI8.unpackZ(baked));
-        normal.mul(mat);
-        return NormI8.pack(normal);
+        float unpackedX = NormI8.unpackX(baked);
+        float unpackedY = NormI8.unpackY(baked);
+        float unpackedZ = NormI8.unpackZ(baked);
+        float x = MatrixHelper.transformNormalX(mat, unpackedX, unpackedY, unpackedZ);
+        float y = MatrixHelper.transformNormalY(mat, unpackedX, unpackedY, unpackedZ);
+        float z = MatrixHelper.transformNormalZ(mat, unpackedX, unpackedY, unpackedZ);
+        return NormI8.pack(x, y, z);
     }
 
     public static int multiplyIntBytes(int a, int b) {
@@ -94,21 +98,22 @@ public class FastSimpleBakedModelRenderer {
         return BUFFED_VERTEX >= BUFFER_VERTEX_COUNT;
     }
 
-    private static void putBulkData(VertexBufferWriter writer, PoseStack.Pose pose, BakedQuad bakedQuad, int light, int overlay, int normal, int color) {
+    private static void putBulkData(VertexBufferWriter writer, PoseStack.Pose pose, BakedQuad bakedQuad,
+                                    int light, int overlay, int color) {
         int[] vertices = bakedQuad.getVertices();
         if (vertices.length != VERTEX_COUNT * STRIDE) return;
         Matrix4f pose_matrix = pose.pose();
-        final int n = getQuadNormal(pose.normal(), vertices[7], normal);
+        final int n = getQuadNormal(pose.normal(), vertices[7]);
+        final int c = color != -1 ? multiplyIntBytes(color, vertices[3]) : vertices[3];
+        final int baked = vertices[6];
+        final int l = Math.max(((baked & 0xffff) << 16) | (baked >> 16), light);
         final long buffer = BUFFER_PTR;
         for (int index = 0; index < VERTEX_COUNT; index++) {
             final int reader = index * STRIDE;
             final float x = Float.intBitsToFloat(vertices[reader]), y = Float.intBitsToFloat(vertices[reader + 1]), z = Float.intBitsToFloat(vertices[reader + 2]);
             final float px = MatrixHelper.transformPositionX(pose_matrix, x, y, z), py = MatrixHelper.transformPositionY(pose_matrix, x, y, z), pz = MatrixHelper.transformPositionZ(pose_matrix, x, y, z);
-            final int c = color != -1 ? multiplyIntBytes(color, vertices[reader + 3]) : vertices[reader + 3];
             final float u = Float.intBitsToFloat(vertices[reader + 4]);
             final float v = Float.intBitsToFloat(vertices[reader + 5]);
-            final int baked = vertices[reader + 6];
-            final int l = Math.max(((baked & 0xffff) << 16) | (baked >> 16), light);
             ModelVertex.write(buffer + index * ModelVertex.STRIDE, px, py, pz, c, u, v, overlay, l, n);
         }
 
@@ -125,12 +130,14 @@ public class FastSimpleBakedModelRenderer {
         return LAST_TINT;
     }
 
-    private static void renderQuadList(PoseStack.Pose pose, VertexBufferWriter writer, List<BakedQuad> bakedQuads, int light, int overlay, ItemStack itemStack, ItemColor colorProvider) {
+    private static void renderQuadList(PoseStack.Pose pose, VertexBufferWriter
+            writer, List<BakedQuad> bakedQuads, int light, int overlay, ItemStack itemStack, ItemColor
+                                               colorProvider) {
         for (BakedQuad bakedQuad : bakedQuads) {
             int normal = CUBE_NORMALS[bakedQuad.getDirection().ordinal()];
             if (normal == DONT_RENDER) continue;
             int color = colorProvider != null && bakedQuad.getTintIndex() != -1 ? GetItemTint(bakedQuad.getTintIndex(), itemStack, colorProvider) : -1;
-            putBulkData(writer, pose, bakedQuad, light, overlay, normal, color);
+            putBulkData(writer, pose, bakedQuad, light, overlay, color);
         }
         if (pose.pose().m32() > -8.0F) { // Do animation for item in GUI or nearby in world
             for (BakedQuad bakedQuad : bakedQuads) {
@@ -139,7 +146,8 @@ public class FastSimpleBakedModelRenderer {
         }
     }
 
-    public static void render(FastSimpleBakedModel model, ItemStack itemStack, int packedLight, int packedOverlay, PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
+    public static void render(FastSimpleBakedModel model, ItemStack itemStack, int packedLight,
+                              int packedOverlay, PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
         PoseStack.Pose pose = poseStack.last();
         prepareNormals(model, pose);
         ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtended) itemColors).sodium$getColorProvider(itemStack) : null;
