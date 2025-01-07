@@ -65,9 +65,9 @@ public class FastSimpleBakedModelRenderer {
     private static int getQuadNormal(Matrix3f mat, int baked) {
         final float factor = PACK_FACTOR[(baked & 0x808080) == 0 ? 0 : 1];
         final int tmp = (baked - 0x7e7e7f) & 0xfdfdfd;
-        if((tmp & 0xff0000) == 0) return packUnsafe(mat.m20, mat.m21, mat.m22, factor); // South_North
-        if((tmp & 0xff) == 0) return packUnsafe(mat.m00, mat.m01, mat.m02, factor); // East_West
-        if((tmp & 0xff00) == 0) return packUnsafe(mat.m10, mat.m11, mat.m12, factor); // Up_Down
+        if((tmp & 0xff0000) == 0) return packSafe(mat.m20, mat.m21, mat.m22, factor); // South_North
+        if((tmp & 0xff) == 0) return packSafe(mat.m00, mat.m01, mat.m02, factor); // East_West
+        if((tmp & 0xff00) == 0) return packSafe(mat.m10, mat.m11, mat.m12, factor); // Up_Down
 
         float unpackedX = NormI8.unpackX(baked);
         float unpackedY = NormI8.unpackY(baked);
@@ -75,7 +75,7 @@ public class FastSimpleBakedModelRenderer {
         float x = MatrixHelper.transformNormalX(mat, unpackedX, unpackedY, unpackedZ);
         float y = MatrixHelper.transformNormalY(mat, unpackedX, unpackedY, unpackedZ);
         float z = MatrixHelper.transformNormalZ(mat, unpackedX, unpackedY, unpackedZ);
-        return NormI8.pack(x, y, z);
+        return packSafe(x, y, z);
     }
 
     public static int multiplyIntBytes(int a, int b) {
