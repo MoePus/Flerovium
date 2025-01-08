@@ -101,30 +101,56 @@ public class FastEntityRenderer {
 
         long ptr = SCRATCH_BUFFER;
 
-        for (int quadIndex = 0; quadIndex < NUM_CUBE_FACES; quadIndex++) {
-            if (!cuboid.shouldDrawFace(quadIndex)) {
-                continue;
+        if (!cuboid.mirror) {
+            for (int quadIndex = 0; quadIndex < NUM_CUBE_FACES; quadIndex++) {
+                if (!cuboid.shouldDrawFace(quadIndex)) {
+                    continue;
+                }
+                int normal = normals[quadIndex];
+                if (normal == -1) {
+                    continue;
+                }
+
+                emitVertex(ptr, VERTEX_POSITIONS[quadIndex][0], VERTEX_TEXTURES[quadIndex][0], packedOverlayLight, normal);
+                ptr += ModelVertex.STRIDE;
+
+                emitVertex(ptr, VERTEX_POSITIONS[quadIndex][1], VERTEX_TEXTURES[quadIndex][1], packedOverlayLight, normal);
+                ptr += ModelVertex.STRIDE;
+
+                emitVertex(ptr, VERTEX_POSITIONS[quadIndex][2], VERTEX_TEXTURES[quadIndex][2], packedOverlayLight, normal);
+                ptr += ModelVertex.STRIDE;
+
+                emitVertex(ptr, VERTEX_POSITIONS[quadIndex][3], VERTEX_TEXTURES[quadIndex][3], packedOverlayLight, normal);
+                ptr += ModelVertex.STRIDE;
+
+                vertexCount += 4;
             }
-            int normal = normals[quadIndex];
-            if (normal == -1) {
-                continue;
+        } else {
+            for (int quadIndex = 0; quadIndex < NUM_CUBE_FACES; quadIndex++) {
+                if (!cuboid.shouldDrawFace(quadIndex)) {
+                    continue;
+                }
+                int normal = normals[quadIndex];
+                if (normal == -1) {
+                    continue;
+                }
+
+                emitVertex(ptr, VERTEX_POSITIONS[quadIndex][3], VERTEX_TEXTURES[quadIndex][3], packedOverlayLight, normal);
+                ptr += ModelVertex.STRIDE;
+
+                emitVertex(ptr, VERTEX_POSITIONS[quadIndex][2], VERTEX_TEXTURES[quadIndex][2], packedOverlayLight, normal);
+                ptr += ModelVertex.STRIDE;
+
+                emitVertex(ptr, VERTEX_POSITIONS[quadIndex][1], VERTEX_TEXTURES[quadIndex][1], packedOverlayLight, normal);
+                ptr += ModelVertex.STRIDE;
+
+                emitVertex(ptr, VERTEX_POSITIONS[quadIndex][0], VERTEX_TEXTURES[quadIndex][0], packedOverlayLight, normal);
+                ptr += ModelVertex.STRIDE;
+
+                vertexCount += 4;
             }
-            int xor = cuboid.mirror ? 3 : 0;
-
-            emitVertex(ptr, VERTEX_POSITIONS[quadIndex][0 ^ xor], VERTEX_TEXTURES[quadIndex][0 ^ xor], packedOverlayLight, normal);
-            ptr += ModelVertex.STRIDE;
-
-            emitVertex(ptr, VERTEX_POSITIONS[quadIndex][1 ^ xor], VERTEX_TEXTURES[quadIndex][1 ^ xor], packedOverlayLight, normal);
-            ptr += ModelVertex.STRIDE;
-
-            emitVertex(ptr, VERTEX_POSITIONS[quadIndex][2 ^ xor], VERTEX_TEXTURES[quadIndex][2 ^ xor], packedOverlayLight, normal);
-            ptr += ModelVertex.STRIDE;
-
-            emitVertex(ptr, VERTEX_POSITIONS[quadIndex][3 ^ xor], VERTEX_TEXTURES[quadIndex][3 ^ xor], packedOverlayLight, normal);
-            ptr += ModelVertex.STRIDE;
-
-            vertexCount += 4;
         }
+
 
         return vertexCount;
     }
