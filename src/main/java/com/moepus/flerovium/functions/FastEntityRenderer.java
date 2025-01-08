@@ -66,10 +66,7 @@ public class FastEntityRenderer {
     };
 
     private static final Vertex[][] VERTEX_POSITIONS = new Vertex[NUM_CUBE_FACES][NUM_FACE_VERTICES];
-    private static final Vertex[][] VERTEX_POSITIONS_MIRRORED = new Vertex[NUM_CUBE_FACES][NUM_FACE_VERTICES];
-
     private static final long[][] VERTEX_TEXTURES = new long[NUM_CUBE_FACES][NUM_FACE_VERTICES];
-    private static final long[][] VERTEX_TEXTURES_MIRRORED = new long[NUM_CUBE_FACES][NUM_FACE_VERTICES];
 
     private static final int[] CUBE_NORMALS = new int[NUM_CUBE_FACES];
     private static final int[] CUBE_NORMALS_MIRRORED = new int[NUM_CUBE_FACES];
@@ -82,13 +79,6 @@ public class FastEntityRenderer {
         for (int quadIndex = 0; quadIndex < NUM_CUBE_FACES; quadIndex++) {
             for (int vertexIndex = 0; vertexIndex < NUM_FACE_VERTICES; vertexIndex++) {
                 VERTEX_POSITIONS[quadIndex][vertexIndex] = CUBE_CORNERS[CUBE_VERTICES[quadIndex][vertexIndex]];
-            }
-        }
-
-        for (int quadIndex = 0; quadIndex < NUM_CUBE_FACES; quadIndex++) {
-            for (int vertexIndex = 0; vertexIndex < NUM_FACE_VERTICES; vertexIndex++) {
-                VERTEX_TEXTURES_MIRRORED[quadIndex][vertexIndex] = VERTEX_TEXTURES[quadIndex][3 - vertexIndex];
-                VERTEX_POSITIONS_MIRRORED[quadIndex][vertexIndex] = VERTEX_POSITIONS[quadIndex][3 - vertexIndex];
             }
         }
     }
@@ -104,8 +94,6 @@ public class FastEntityRenderer {
     }
 
     private static int emitQuads(ModelCuboid cuboid, int overlay, int light) {
-        final var positions = cuboid.mirror ? VERTEX_POSITIONS_MIRRORED : VERTEX_POSITIONS;
-        final var textures = cuboid.mirror ? VERTEX_TEXTURES_MIRRORED : VERTEX_TEXTURES;
         final var normals = cuboid.mirror ? CUBE_NORMALS_MIRRORED : CUBE_NORMALS;
         final long packedOverlayLight = compose(overlay, light);
 
@@ -121,17 +109,18 @@ public class FastEntityRenderer {
             if (normal == -1) {
                 continue;
             }
+            int xor = cuboid.mirror ? 3 : 0;
 
-            emitVertex(ptr, positions[quadIndex][0], textures[quadIndex][0], packedOverlayLight, normal);
+            emitVertex(ptr, VERTEX_POSITIONS[quadIndex][0 ^ xor], VERTEX_TEXTURES[quadIndex][0 ^ xor], packedOverlayLight, normal);
             ptr += ModelVertex.STRIDE;
 
-            emitVertex(ptr, positions[quadIndex][1], textures[quadIndex][1], packedOverlayLight, normal);
+            emitVertex(ptr, VERTEX_POSITIONS[quadIndex][1 ^ xor], VERTEX_TEXTURES[quadIndex][1 ^ xor], packedOverlayLight, normal);
             ptr += ModelVertex.STRIDE;
 
-            emitVertex(ptr, positions[quadIndex][2], textures[quadIndex][2], packedOverlayLight, normal);
+            emitVertex(ptr, VERTEX_POSITIONS[quadIndex][2 ^ xor], VERTEX_TEXTURES[quadIndex][2 ^ xor], packedOverlayLight, normal);
             ptr += ModelVertex.STRIDE;
 
-            emitVertex(ptr, positions[quadIndex][3], textures[quadIndex][3], packedOverlayLight, normal);
+            emitVertex(ptr, VERTEX_POSITIONS[quadIndex][3 ^ xor], VERTEX_TEXTURES[quadIndex][3 ^ xor], packedOverlayLight, normal);
             ptr += ModelVertex.STRIDE;
 
             vertexCount += 4;
