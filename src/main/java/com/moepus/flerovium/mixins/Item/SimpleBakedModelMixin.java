@@ -3,10 +3,14 @@ package com.moepus.flerovium.mixins.Item;
 import com.moepus.flerovium.View.SimpleBakedModelView;
 import me.jellysquid.mods.sodium.client.model.quad.BakedQuadView;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.SimpleBakedModel;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.RenderTypeHelper;
+import net.minecraftforge.client.extensions.IForgeBakedModel;
+import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 @Mixin(SimpleBakedModel.class)
-public abstract class SimpleBakedModelMixin implements SimpleBakedModelView {
+public abstract class SimpleBakedModelMixin implements SimpleBakedModelView, IForgeBakedModel {
     @Shadow
     @Final
     protected List<BakedQuad> unculledFaces;
@@ -47,15 +51,15 @@ public abstract class SimpleBakedModelMixin implements SimpleBakedModelView {
      * @reason Cache Render Types
      */
     @Overwrite(remap = false)
-    public List<net.minecraft.client.renderer.RenderType> getRenderTypes(net.minecraft.world.item.ItemStack itemStack, boolean fabulous) {
+    public @NotNull List<RenderType> getRenderTypes(@NotNull ItemStack itemStack, boolean fabulous) {
         if (!fabulous) {
             if (itemRenderTypes == null) {
-                itemRenderTypes = List.of(RenderTypeHelper.getFallbackItemRenderType(itemStack, (BakedModel) this, false));
+                itemRenderTypes = IForgeBakedModel.super.getRenderTypes(itemStack, fabulous);
             }
             return itemRenderTypes;
         }
         if (fabulousItemRenderTypes == null) {
-            fabulousItemRenderTypes = List.of(RenderTypeHelper.getFallbackItemRenderType(itemStack, (BakedModel) this, false));
+            fabulousItemRenderTypes = IForgeBakedModel.super.getRenderTypes(itemStack, fabulous);
         }
         return fabulousItemRenderTypes;
     }
