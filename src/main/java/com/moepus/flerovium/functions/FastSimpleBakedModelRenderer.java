@@ -65,9 +65,9 @@ public class FastSimpleBakedModelRenderer {
     private static int getQuadNormal(Matrix3f mat, int baked) {
         final float factor = PACK_FACTOR[(baked & 0x808080) == 0 ? 0 : 1];
         final int tmp = (baked - 0x7e7e7f) & 0xfdfdfd;
-        if((tmp & 0xff0000) == 0) return packSafe(mat.m20, mat.m21, mat.m22, factor); // South_North
-        if((tmp & 0xff) == 0) return packSafe(mat.m00, mat.m01, mat.m02, factor); // East_West
-        if((tmp & 0xff00) == 0) return packSafe(mat.m10, mat.m11, mat.m12, factor); // Up_Down
+        if ((tmp & 0xff0000) == 0) return packSafe(mat.m20, mat.m21, mat.m22, factor); // South_North
+        if ((tmp & 0xff) == 0) return packSafe(mat.m00, mat.m01, mat.m02, factor); // East_West
+        if ((tmp & 0xff00) == 0) return packSafe(mat.m10, mat.m11, mat.m12, factor); // Up_Down
 
         float unpackedX = NormI8.unpackX(baked);
         float unpackedY = NormI8.unpackY(baked);
@@ -108,16 +108,18 @@ public class FastSimpleBakedModelRenderer {
         final int baked = vertices[6];
         final int l = Math.max(((baked & 0xffff) << 16) | (baked >> 16), light);
         final long buffer = BUFFER_PTR;
+        int READ_PTR = 0;
+        long WRITE_PTR = buffer;
         for (int index = 0; index < VERTEX_COUNT; index++) {
-            final int reader = index * STRIDE;
-            final float x = Float.intBitsToFloat(vertices[reader]), y = Float.intBitsToFloat(vertices[reader + 1]), z = Float.intBitsToFloat(vertices[reader + 2]);
-            final float px = MatrixHelper.transformPositionX(pose_matrix, x, y, z), py = MatrixHelper.transformPositionY(pose_matrix, x, y, z), pz = MatrixHelper.transformPositionZ(pose_matrix, x, y, z);
-            final float u = Float.intBitsToFloat(vertices[reader + 4]);
-            final float v = Float.intBitsToFloat(vertices[reader + 5]);
-            ModelVertex.write(buffer + index * ModelVertex.STRIDE, px, py, pz, c, u, v, overlay, l, n);
+            final float x = Float.intBitsToFloat(vertices[READ_PTR]), y = Float.intBitsToFloat(vertices[READ_PTR + 1]), z = Float.intBitsToFloat(vertices[READ_PTR + 2]);
+            final int u = vertices[READ_PTR + 4], v = vertices[READ_PTR + 5];
+            ModelVertex.write(WRITE_PTR, MatrixHelper.transformPositionX(pose_matrix, x, y, z), MatrixHelper.transformPositionY(pose_matrix, x, y, z), MatrixHelper.transformPositionZ(pose_matrix, x, y, z), c, Float.intBitsToFloat(u), Float.intBitsToFloat(v), overlay, l, n);
+
+            READ_PTR += STRIDE;
+            WRITE_PTR += ModelVertex.STRIDE;
         }
 
-        BUFFER_PTR += ModelVertex.STRIDE * VERTEX_COUNT;
+        BUFFER_PTR = WRITE_PTR;
         BUFFED_VERTEX += VERTEX_COUNT;
         if (isBufferMax()) flush(writer);
     }
