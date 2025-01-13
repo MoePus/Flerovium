@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class ParticleEngineMixin {
     @Redirect(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/LightTexture;Lnet/minecraft/client/Camera;FLnet/minecraft/client/renderer/culling/Frustum;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/culling/Frustum;isVisible(Lnet/minecraft/world/phys/AABB;)Z"))
     boolean FastFrustumCheck(Frustum instance, AABB aabb, @Local Particle particle) {
+        if (aabb.minX == Double.NEGATIVE_INFINITY) return true;
+
         float x = (float) (particle.x - instance.camX);
         float y = (float) (particle.y - instance.camY);
         float z = (float) (particle.z - instance.camZ);
