@@ -2,6 +2,7 @@ package com.moepus.flerovium.functions;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import me.jellysquid.mods.sodium.client.render.immediate.model.ModelCuboid;
+import me.jellysquid.mods.sodium.client.render.immediate.model.ModelPartData;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
 import net.caffeinemc.mods.sodium.api.vertex.attributes.common.LightAttribute;
 import net.caffeinemc.mods.sodium.api.vertex.attributes.common.NormalAttribute;
@@ -9,6 +10,9 @@ import net.caffeinemc.mods.sodium.api.vertex.attributes.common.OverlayAttribute;
 import net.caffeinemc.mods.sodium.api.vertex.attributes.common.TextureAttribute;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.vertex.format.common.ModelVertex;
+import net.minecraft.client.model.geom.ModelPart;
+import org.apache.commons.lang3.ArrayUtils;
+import org.embeddedt.embeddium.render.matrix_stack.CachingPoseStack;
 import org.joml.*;
 import org.joml.Math;
 import org.lwjgl.opengl.GL11;
@@ -80,6 +84,57 @@ public class FastEntityRenderer {
             for (int vertexIndex = 0; vertexIndex < NUM_FACE_VERTICES; vertexIndex++) {
                 VERTEX_POSITIONS[quadIndex][vertexIndex] = CUBE_CORNERS[CUBE_VERTICES[quadIndex][vertexIndex]];
             }
+        }
+    }
+
+    public static void render(PoseStack matrixStack, VertexBufferWriter writer, ModelPart part, int light, int overlay, int color) {
+        ModelPartData accessor = ModelPartData.from(part);
+
+        if (!accessor.isVisible()) {
+            return;
+        }
+
+        var cuboids = accessor.getCuboids();
+        var children = accessor.getChildren();
+
+        if (ArrayUtils.isEmpty(cuboids) && ArrayUtils.isEmpty(children)) {
+            return;
+        }
+
+        ((CachingPoseStack)matrixStack).embeddium$setCachingEnabled(true);
+
+        matrixStack.pushPose();
+
+        part.translateAndRotate(matrixStack);
+
+        if (!accessor.isHidden()) {
+            renderCuboids(matrixStack.last(), writer, cuboids, light, overlay, color);
+        }
+
+        renderChildren(matrixStack, writer, light, overlay, color, children);
+
+        matrixStack.popPose();
+
+        ((CachingPoseStack)matrixStack).embeddium$setCachingEnabled(false);
+    }
+
+    private static void renderCuboids(PoseStack.Pose matrices, VertexBufferWriter writer, ModelCuboid[] cuboids, int light, int overlay, int color) {
+        prepareNormals(matrices);
+
+        for (ModelCuboid cuboid : cuboids) {
+            prepareVertices(matrices, cuboid, color);
+
+            var vertexCount = emitQuads(cuboid, overlay, light);
+
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                writer.push(stack, SCRATCH_BUFFER, vertexCount, ModelVertex.FORMAT);
+            }
+        }
+    }
+
+    private static void renderChildren(PoseStack matrices, VertexBufferWriter writer, int light, int overlay, int color, ModelPart[] children) {
+        for (ModelPart part : children) {
+            render(matrices, writer, part, light, overlay, color);
         }
     }
 

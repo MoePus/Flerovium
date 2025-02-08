@@ -2,7 +2,9 @@ package com.moepus.flerovium.mixins.Entity;
 
 import com.moepus.flerovium.functions.FastEntityRenderer;
 import me.jellysquid.mods.sodium.client.model.ModelCuboidAccessor;
+import me.jellysquid.mods.sodium.client.render.immediate.model.EntityRenderer;
 import me.jellysquid.mods.sodium.client.render.immediate.model.ModelCuboid;
+import me.jellysquid.mods.sodium.client.render.vertex.VertexConsumerUtils;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.minecraft.client.model.geom.ModelPart;
@@ -14,7 +16,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.List;
 
-@Mixin(ModelPart.class)
+@Mixin(value = ModelPart.class, priority = 900)
 public class ModelPartMixin {
     @Mutable
     @Shadow
@@ -52,5 +54,18 @@ public class ModelPartMixin {
                 cube.compile(matrixPose, vertices, light, overlay, red, green, blue, alpha);
             }
         }
+    }
+
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V", at = @At("HEAD"), cancellable = true)
+    private void onRender(PoseStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha, CallbackInfo ci) {
+        VertexBufferWriter writer = VertexConsumerUtils.convertOrLog(vertices);
+
+        if (writer == null) {
+            return;
+        }
+
+        ci.cancel();
+
+        FastEntityRenderer.render(matrices, writer, (ModelPart) (Object) this, light, overlay, ColorABGR.pack(red, green, blue, alpha));
     }
 }

@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.lwjgl.system.MemoryStack;
 
 
-@Mixin(SingleQuadParticle.class)
+@Mixin(value = SingleQuadParticle.class, priority = 100)
 public abstract class SingleQuadParticleMixin extends Particle {
     @Shadow
     public abstract float getQuadSize(float pt);
