@@ -56,7 +56,7 @@ public class FastSimpleBakedModel implements BakedModel {
             return;
         }
         // In World
-        needExtraCulling = !((SimpleBakedModelView)model).hasUnassignedFaces() && pose.pose().m32() < -3.0F;
+        needExtraCulling = !((SimpleBakedModelView)model).hasUnassignedFaces() && pose.pose().m32() < -3.0F && Math.abs(pose.pose().m31()) < 4F;
         if (transforms.gui == ItemTransform.NO_TRANSFORM && pose.pose().m32() < -12.0F) { // Item Far away
             face[Direction.NORTH.ordinal()] = true;
             face[Direction.SOUTH.ordinal()] = true;

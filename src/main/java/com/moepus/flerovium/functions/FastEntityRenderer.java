@@ -308,7 +308,7 @@ public class FastEntityRenderer {
         CUBE_NORMALS[FACE_POS_X] = normal2Int(-normal.m00, -normal.m01, -normal.m02);
         CUBE_NORMALS[FACE_NEG_X] = normal2Int(normal.m00, normal.m01, normal.m02);
 
-        if (matrices.pose().m32() < -16.0F) {
+        if (matrices.pose().m32() < -16.0F && Math.abs(matrices.pose().m31()) < 4F) {
             Matrix4f mat = matrices.pose();
             float scalar = 127 * Math.invsqrt(Math.fma(mat.m30(), mat.m30(), Math.fma(mat.m31(), mat.m31(), mat.m32() * mat.m32())));
             byte viewX = (byte) (mat.m30() * scalar);
