@@ -1,6 +1,8 @@
 package com.moepus.flerovium.functions;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexSorting;
 import me.jellysquid.mods.sodium.client.render.immediate.model.ModelCuboid;
 import me.jellysquid.mods.sodium.client.render.immediate.model.ModelPartData;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
@@ -73,10 +75,8 @@ public class FastEntityRenderer {
     private static final long[][] VERTEX_TEXTURES = new long[NUM_CUBE_FACES][NUM_FACE_VERTICES];
 
     private static final int[] CUBE_NORMALS = new int[NUM_CUBE_FACES];
-    private static final int[] CUBE_NORMALS_MIRRORED = new int[NUM_CUBE_FACES];
 
     private static int FACE;
-    private static int FACE_MIRRORED;
 
     static {
         for (int cornerIndex = 0; cornerIndex < NUM_CUBE_VERTICES; cornerIndex++) {
@@ -179,10 +179,10 @@ public class FastEntityRenderer {
             }
         } else {
             for (int quadIndex = 0; quadIndex < NUM_CUBE_FACES; quadIndex++) {
-                if (!cuboid.shouldDrawFace(quadIndex) || (FACE_MIRRORED & (1 << quadIndex)) == 0) {
+                if (!cuboid.shouldDrawFace(quadIndex) || (FACE & (1 << quadIndex)) == 0) {
                     continue;
                 }
-                int normal = CUBE_NORMALS_MIRRORED[quadIndex];
+                int normal = CUBE_NORMALS[quadIndex];
 
                 emitVertex(ptr, VERTEX_POSITIONS[quadIndex][3], VERTEX_TEXTURES[quadIndex][3], packedOverlayLight, normal);
                 ptr += ModelVertex.STRIDE;
@@ -245,7 +245,7 @@ public class FastEntityRenderer {
         CUBE_CORNERS[VERTEX_X1_Y1_Z1].set(p1x, p1y, p1z, color);
 
         float lx = cuboid.x2 - cuboid.x1, ly = cuboid.y2 - cuboid.y1, lz = cuboid.z2 - cuboid.z1;
-        if (ly == 0) FACE = FACE_MIRRORED = ~0;
+        if (ly == 0) FACE = ~0;
         float vxx = pose.m00() * lx, vxy = pose.m01() * lx, vxz = pose.m02() * lx;
         float vyx = pose.m10() * ly, vyy = pose.m11() * ly, vyz = pose.m12() * ly;
         float vzx = pose.m20() * lz, vzy = pose.m21() * lz, vzz = pose.m22() * lz;
@@ -302,8 +302,8 @@ public class FastEntityRenderer {
         CUBE_NORMALS[FACE_POS_X] = normal2Int(-normal.m00, -normal.m01, -normal.m02);
         CUBE_NORMALS[FACE_NEG_X] = normal2Int(normal.m00, normal.m01, normal.m02);
 
-        FACE = FACE_MIRRORED = ~0;
-        if (matrices.pose().m32() < -16.0F && Math.abs(matrices.pose().m31()) < 4F) {
+        FACE = ~0;
+        if (matrices.pose().m32() < -16.0F && RenderSystem.getModelViewMatrix().m32() == 0) {
             Matrix4f mat = matrices.pose();
             float scalar = 127 * Math.invsqrt(Math.fma(mat.m30(), mat.m30(), Math.fma(mat.m31(), mat.m31(), mat.m32() * mat.m32())));
             byte viewX = (byte) (mat.m30() * scalar);
@@ -316,17 +316,7 @@ public class FastEntityRenderer {
             if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_POS_Z])) FACE ^= (1 << FACE_POS_Z);
             if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_NEG_X])) FACE ^= (1 << FACE_NEG_X);
             if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_POS_X])) FACE ^= (1 << FACE_POS_X);
-
-            FACE_MIRRORED = (FACE & 0b001111) | ((FACE & 0b100000) >> 1) | ((FACE & 0b010000) << 1);
         }
-
-        // When mirroring is used, the normals for EAST and WEST are swapped.
-        CUBE_NORMALS_MIRRORED[FACE_NEG_Y] = CUBE_NORMALS[FACE_NEG_Y];
-        CUBE_NORMALS_MIRRORED[FACE_POS_Y] = CUBE_NORMALS[FACE_POS_Y];
-        CUBE_NORMALS_MIRRORED[FACE_NEG_Z] = CUBE_NORMALS[FACE_NEG_Z];
-        CUBE_NORMALS_MIRRORED[FACE_POS_Z] = CUBE_NORMALS[FACE_POS_Z];
-        CUBE_NORMALS_MIRRORED[FACE_POS_X] = CUBE_NORMALS[FACE_NEG_X]; // mirrored
-        CUBE_NORMALS_MIRRORED[FACE_NEG_X] = CUBE_NORMALS[FACE_POS_X]; // mirrored
     }
 
     private static void buildVertexTexCoord(long[] uvs, float u1, float v1, float u2, float v2) {
