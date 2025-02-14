@@ -75,6 +75,9 @@ public class FastEntityRenderer {
     private static final int[] CUBE_NORMALS = new int[NUM_CUBE_FACES];
     private static final int[] CUBE_NORMALS_MIRRORED = new int[NUM_CUBE_FACES];
 
+    private static int FACE;
+    private static int FACE_MIRRORED;
+
     static {
         for (int cornerIndex = 0; cornerIndex < NUM_CUBE_VERTICES; cornerIndex++) {
             CUBE_CORNERS[cornerIndex] = new Vertex();
@@ -101,7 +104,7 @@ public class FastEntityRenderer {
             return;
         }
 
-        ((CachingPoseStack)matrixStack).embeddium$setCachingEnabled(true);
+        ((CachingPoseStack) matrixStack).embeddium$setCachingEnabled(true);
 
         matrixStack.pushPose();
 
@@ -115,7 +118,7 @@ public class FastEntityRenderer {
 
         matrixStack.popPose();
 
-        ((CachingPoseStack)matrixStack).embeddium$setCachingEnabled(false);
+        ((CachingPoseStack) matrixStack).embeddium$setCachingEnabled(false);
     }
 
     private static void renderCuboids(PoseStack.Pose matrices, VertexBufferWriter writer, ModelCuboid[] cuboids, int light, int overlay, int color) {
@@ -149,22 +152,16 @@ public class FastEntityRenderer {
     }
 
     private static int emitQuads(ModelCuboid cuboid, int overlay, int light) {
-        final var normals = cuboid.mirror ? CUBE_NORMALS_MIRRORED : CUBE_NORMALS;
         final long packedOverlayLight = compose(overlay, light);
-
         var vertexCount = 0;
-
         long ptr = SCRATCH_BUFFER;
 
         if (!cuboid.mirror) {
             for (int quadIndex = 0; quadIndex < NUM_CUBE_FACES; quadIndex++) {
-                if (!cuboid.shouldDrawFace(quadIndex)) {
+                if (!cuboid.shouldDrawFace(quadIndex) || (FACE & (1 << quadIndex)) == 0) {
                     continue;
                 }
-                int normal = normals[quadIndex];
-                if (normal == -1) {
-                    continue;
-                }
+                int normal = CUBE_NORMALS[quadIndex];
 
                 emitVertex(ptr, VERTEX_POSITIONS[quadIndex][0], VERTEX_TEXTURES[quadIndex][0], packedOverlayLight, normal);
                 ptr += ModelVertex.STRIDE;
@@ -182,13 +179,10 @@ public class FastEntityRenderer {
             }
         } else {
             for (int quadIndex = 0; quadIndex < NUM_CUBE_FACES; quadIndex++) {
-                if (!cuboid.shouldDrawFace(quadIndex)) {
+                if (!cuboid.shouldDrawFace(quadIndex) || (FACE_MIRRORED & (1 << quadIndex)) == 0) {
                     continue;
                 }
-                int normal = normals[quadIndex];
-                if (normal == -1) {
-                    continue;
-                }
+                int normal = CUBE_NORMALS_MIRRORED[quadIndex];
 
                 emitVertex(ptr, VERTEX_POSITIONS[quadIndex][3], VERTEX_TEXTURES[quadIndex][3], packedOverlayLight, normal);
                 ptr += ModelVertex.STRIDE;
@@ -205,7 +199,6 @@ public class FastEntityRenderer {
                 vertexCount += 4;
             }
         }
-
 
         return vertexCount;
     }
@@ -252,6 +245,7 @@ public class FastEntityRenderer {
         CUBE_CORNERS[VERTEX_X1_Y1_Z1].set(p1x, p1y, p1z, color);
 
         float lx = cuboid.x2 - cuboid.x1, ly = cuboid.y2 - cuboid.y1, lz = cuboid.z2 - cuboid.z1;
+        if (ly == 0) FACE = FACE_MIRRORED = ~0;
         float vxx = pose.m00() * lx, vxy = pose.m01() * lx, vxz = pose.m02() * lx;
         float vyx = pose.m10() * ly, vyy = pose.m11() * ly, vyz = pose.m12() * ly;
         float vzx = pose.m20() * lz, vzy = pose.m21() * lz, vzz = pose.m22() * lz;
@@ -308,18 +302,22 @@ public class FastEntityRenderer {
         CUBE_NORMALS[FACE_POS_X] = normal2Int(-normal.m00, -normal.m01, -normal.m02);
         CUBE_NORMALS[FACE_NEG_X] = normal2Int(normal.m00, normal.m01, normal.m02);
 
+        FACE = FACE_MIRRORED = ~0;
         if (matrices.pose().m32() < -16.0F && Math.abs(matrices.pose().m31()) < 4F) {
             Matrix4f mat = matrices.pose();
             float scalar = 127 * Math.invsqrt(Math.fma(mat.m30(), mat.m30(), Math.fma(mat.m31(), mat.m31(), mat.m32() * mat.m32())));
             byte viewX = (byte) (mat.m30() * scalar);
             byte viewY = (byte) (mat.m31() * scalar);
             byte viewZ = (byte) (mat.m32() * scalar);
-            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_NEG_Y])) CUBE_NORMALS[FACE_NEG_Y] = -1;
-            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_POS_Y])) CUBE_NORMALS[FACE_POS_Y] = -1;
-            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_NEG_Z])) CUBE_NORMALS[FACE_NEG_Z] = -1;
-            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_POS_Z])) CUBE_NORMALS[FACE_POS_Z] = -1;
-            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_NEG_X])) CUBE_NORMALS[FACE_NEG_X] = -1;
-            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_POS_X])) CUBE_NORMALS[FACE_POS_X] = -1;
+
+            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_NEG_Y])) FACE ^= (1 << FACE_NEG_Y);
+            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_POS_Y])) FACE ^= (1 << FACE_POS_Y);
+            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_NEG_Z])) FACE ^= (1 << FACE_NEG_Z);
+            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_POS_Z])) FACE ^= (1 << FACE_POS_Z);
+            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_NEG_X])) FACE ^= (1 << FACE_NEG_X);
+            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_POS_X])) FACE ^= (1 << FACE_POS_X);
+
+            FACE_MIRRORED = (FACE & 0b001111) | ((FACE & 0b100000) >> 1) | ((FACE & 0b010000) << 1);
         }
 
         // When mirroring is used, the normals for EAST and WEST are swapped.
