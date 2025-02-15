@@ -291,6 +291,41 @@ public class FastEntityRenderer {
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_POS_Z], cuboid.u4, cuboid.v1, cuboid.u5, cuboid.v2);
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_NEG_X], cuboid.u2, cuboid.v1, cuboid.u4, cuboid.v2);
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_POS_X], cuboid.u0, cuboid.v1, cuboid.u1, cuboid.v2);
+
+        FACE = ~0;
+        if (matrices.pose().m32() <= -16.0F && RenderSystem.getModelViewMatrix().m32() == 0) {
+            Matrix3f normal = matrices.normal();
+
+            float posX = p1x + p8x;
+            float posY = p1y + p8y;
+            float posZ =  p1z + p8z;
+            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 < 0) FACE &= ~(1 << FACE_POS_X);
+
+            posX = p2x + p7x;
+            posY = p2y + p7y;
+            posZ = p2z + p7z;
+            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 > 0) FACE &= ~(1 << FACE_NEG_X);
+
+            posX = p1x + p3x;
+            posY = p1y + p3y;
+            posZ = p1z + p3z;
+            if (posX * normal.m20 + posY * normal.m21 + posZ * normal.m22 < 0) FACE &= ~(1 << FACE_NEG_Z);
+
+            posX = p5x + p7x;
+            posY = p5y + p7y;
+            posZ = p5z + p7z;
+            if (posX * normal.m20 + posY * normal.m21 + posZ * normal.m22 > 0) FACE &= ~(1 << FACE_POS_Z);
+
+            posX = p1x + p6x;
+            posY = p1y + p6y;
+            posZ = p1z + p6z;
+            if (posX * normal.m10 + posY * normal.m11 + posZ * normal.m12 < 0) FACE &= ~(1 << FACE_NEG_Y);
+
+            posX = p4x + p7x;
+            posY = p4y + p7y;
+            posZ = p4z + p7z;
+            if (posX * normal.m10 + posY * normal.m11 + posZ * normal.m12 > 0) FACE &= ~(1 << FACE_POS_Y);
+        }
     }
 
     public static void prepareNormals(PoseStack.Pose matrices) {
@@ -301,22 +336,6 @@ public class FastEntityRenderer {
         CUBE_NORMALS[FACE_POS_Z] = normal2Int(normal.m20, normal.m21, normal.m22);
         CUBE_NORMALS[FACE_POS_X] = normal2Int(-normal.m00, -normal.m01, -normal.m02);
         CUBE_NORMALS[FACE_NEG_X] = normal2Int(normal.m00, normal.m01, normal.m02);
-
-        FACE = ~0;
-        if (matrices.pose().m32() < -16.0F && RenderSystem.getModelViewMatrix().m32() == 0) {
-            Matrix4f mat = matrices.pose();
-            float scalar = 127 * Math.invsqrt(Math.fma(mat.m30(), mat.m30(), Math.fma(mat.m31(), mat.m31(), mat.m32() * mat.m32())));
-            byte viewX = (byte) (mat.m30() * scalar);
-            byte viewY = (byte) (mat.m31() * scalar);
-            byte viewZ = (byte) (mat.m32() * scalar);
-
-            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_NEG_Y])) FACE ^= (1 << FACE_NEG_Y);
-            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_POS_Y])) FACE ^= (1 << FACE_POS_Y);
-            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_NEG_Z])) FACE ^= (1 << FACE_NEG_Z);
-            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_POS_Z])) FACE ^= (1 << FACE_POS_Z);
-            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_NEG_X])) FACE ^= (1 << FACE_NEG_X);
-            if (cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[FACE_POS_X])) FACE ^= (1 << FACE_POS_X);
-        }
     }
 
     private static void buildVertexTexCoord(long[] uvs, float u1, float v1, float u2, float v2) {
