@@ -27,7 +27,7 @@ public class MixinPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         return switch (mixinClassName) {
-            case "com.moepus.flerovium.mixins.Entity.ModelPartMixin" -> !isModLoaded("bendylib");
+            case "com.moepus.flerovium.mixins.Entity.ModelPartMixin" -> !isModLoaded("bendylib") && !isModLoaded("physicsmod");
             default -> true;
         };
     }
