@@ -104,9 +104,11 @@ public class FastEntityRenderer {
         if (ArrayUtils.isEmpty(cuboids) && ArrayUtils.isEmpty(children)) {
             return;
         }
+
         if (matrixStack instanceof CachingPoseStack) {
             ((CachingPoseStack) matrixStack).embeddium$setCachingEnabled(true);
         }
+
         matrixStack.pushPose();
 
         part.translateAndRotate(matrixStack);
@@ -118,9 +120,11 @@ public class FastEntityRenderer {
         renderChildren(matrixStack, writer, light, overlay, color, children);
 
         matrixStack.popPose();
+
         if (matrixStack instanceof CachingPoseStack) {
             ((CachingPoseStack) matrixStack).embeddium$setCachingEnabled(false);
         }
+
     }
     private static void renderCuboids(PoseStack.Pose matrices, VertexBufferWriter writer, ModelCuboid[] cuboids, int light, int overlay, int color) {
         prepareNormals(matrices);
