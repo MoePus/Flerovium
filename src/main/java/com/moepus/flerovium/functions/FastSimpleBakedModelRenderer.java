@@ -1,6 +1,7 @@
 package com.moepus.flerovium.functions;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import me.jellysquid.mods.sodium.client.model.color.interop.ItemColorsExtended;
 import me.jellysquid.mods.sodium.client.model.color.interop.ItemColorsExtension;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
@@ -149,10 +150,35 @@ public class FastSimpleBakedModelRenderer {
     }
 
     public static void render(FastSimpleBakedModel model, ItemStack itemStack, int packedLight,
-                              int packedOverlay, PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
+        int packedOverlay, PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
         PoseStack.Pose pose = poseStack.last();
         prepareNormals(model, pose);
-        ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtension) itemColors).sodium$getColorProvider(itemStack) : null;
+
+        ItemColor colorProvider = null;
+
+        if (itemColors != null && itemStack != null && !itemStack.isEmpty()) {
+            try {
+                Class<?> sodiumItemColorsExtensionClass = Class.forName("me.jellysquid.mods.sodium.client.model.color.interop.ItemColorsExtension");
+                if (sodiumItemColorsExtensionClass.isInstance(itemColors)) {
+                    colorProvider = ((ItemColorsExtension) itemColors).sodium$getColorProvider(itemStack);
+                }
+            } catch (ClassNotFoundException ignored) {
+                try {
+                    Class<?> embeddiumItemColorsExtendedClass = Class.forName("me.jellysquid.mods.sodium.client.model.color.interop.ItemColorsExtended");
+                    if (embeddiumItemColorsExtendedClass.isInstance(itemColors)) {
+                        colorProvider = ((ItemColorsExtended) itemColors).sodium$getColorProvider(itemStack);
+                    }
+                } catch (ClassNotFoundException ignoreds) {
+                    try{
+                        Class<?> sodiumItemColorsExtensionClass = Class.forName("net.caffeinemc.mods.sodium.client.model.color.interop.ItemColorsExtension");
+                        if (sodiumItemColorsExtensionClass.isInstance(itemColors)) {
+                            colorProvider = ((ItemColorsExtension) itemColors).sodium$getColorProvider(itemStack);
+                        }
+                    } catch (ClassNotFoundException ex) {
+                    }
+                }
+            }
+        }
 
         LAST_TINT_INDEX = LAST_TINT = -1;
         for (Direction direction : Direction.values()) {
@@ -162,4 +188,5 @@ public class FastSimpleBakedModelRenderer {
 
         flush(writer);
     }
+
 }

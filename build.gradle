@@ -170,6 +170,7 @@ dependencies {
     implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.4.1")) {
         jarJar.ranged(it, "[0.4.1,)")
     }
+    implementation fg.deobf("org.embeddedt:embeddium-${minecraft_version}:0.3.31-beta.53+mc${minecraft_version}")
     implementation fg.deobf('libs:Sodium-NeoForge:mc1.20.1-0.6.0-Fix')
     // runtimeOnly fg.deobf("curse.maven:moonlight-499980:5938277")
     // runtimeOnly fg.deobf("curse.maven:supplementaries-412082:5928556")

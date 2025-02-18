@@ -14,6 +14,7 @@ import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.vertex.format.common.ModelVertex;
 import net.minecraft.client.model.geom.ModelPart;
 import org.apache.commons.lang3.ArrayUtils;
+
 import org.embeddedt.embeddium.render.matrix_stack.CachingPoseStack;
 import org.joml.*;
 import org.joml.Math;
@@ -104,7 +105,9 @@ public class FastEntityRenderer {
             return;
         }
 
-        ((CachingPoseStack) matrixStack).embeddium$setCachingEnabled(true);
+        if (matrixStack instanceof CachingPoseStack) {
+            ((CachingPoseStack) matrixStack).embeddium$setCachingEnabled(true);
+        }
 
         matrixStack.pushPose();
 
@@ -118,7 +121,9 @@ public class FastEntityRenderer {
 
         matrixStack.popPose();
 
-        ((CachingPoseStack) matrixStack).embeddium$setCachingEnabled(false);
+        if (matrixStack instanceof CachingPoseStack) {
+            ((CachingPoseStack) matrixStack).embeddium$setCachingEnabled(false);
+        }
     }
 
     private static void renderCuboids(PoseStack.Pose matrices, VertexBufferWriter writer, ModelCuboid[] cuboids, int light, int overlay, int color) {

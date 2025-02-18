@@ -29,7 +29,7 @@ public class ModelPartMixin {
      * had to be neutered to accommodate mods injecting custom logic here and/or mutating the models at runtime.
      */
     @Inject(method = "compile", at = @At("HEAD"), cancellable = true)
-    private void onRender(PoseStack.Pose matrixPose, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha, CallbackInfo ci) {
+    private void onRender(PoseStack.Pose matrixPose, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha, CallbackInfo ci) throws ClassNotFoundException {
         VertexBufferWriter writer = VertexBufferWriter.tryOf(vertices);
 
         if (writer == null) {
@@ -43,14 +43,35 @@ public class ModelPartMixin {
         var cubes = this.cubes;
         int packedColor = ColorABGR.pack(red, green, blue, alpha);
 
-        //noinspection ForLoopReplaceableByForEach
-        for(int i = 0; i < cubes.size(); i++) {
-            var cube = cubes.get(i);
-            var simpleCuboid = ((ModelCuboidAccessor)cube).sodium$copy();
-            if(simpleCuboid != null) {
-                FastEntityRenderer.renderCuboidFast(matrixPose, writer, simpleCuboid, light, overlay, packedColor);
+        for (var cube : cubes) {
+            Object simpleCuboid = null;
+
+            try {
+                Class<?> sodiumAccessorClass = Class.forName("me.jellysquid.mods.sodium.client.model.ModelCuboidAccessor");
+                if (sodiumAccessorClass.isInstance(cube)) {
+                    simpleCuboid = ((ModelCuboidAccessor) cube).sodium$copy();
+                }
+            } catch (ClassNotFoundException e) {
+                try {
+                    Class<?> embeddiumAccessorClass = Class.forName("me.jellysquid.mods.sodium.client.model.ModelCuboidAccessor");
+                    if (embeddiumAccessorClass.isInstance(cube)) {
+                        simpleCuboid = ((ModelCuboidAccessor) cube).embeddium$getSimpleCuboid();
+                    }
+                } catch (ClassNotFoundException ex) {
+                    try {
+                        Class<?> sodiumAccessorClass = Class.forName("net.caffeinemc.mods.sodium.client.model.ModelCuboidAccessor");
+                        if (sodiumAccessorClass.isInstance(cube)) {
+                            simpleCuboid = ((ModelCuboidAccessor) cube).sodium$copy();
+                        }
+                    } catch (ClassNotFoundException ex2){
+                        simpleCuboid = ((ModelCuboidAccessor) cube).getClass();
+                    }
+                }
+            }
+
+            if (simpleCuboid != null) {
+                FastEntityRenderer.renderCuboidFast(matrixPose, writer, (ModelCuboid) simpleCuboid, light, overlay, packedColor);
             } else {
-                // Must use slow path as this cube can't be converted to a simple cuboid
                 cube.compile(matrixPose, vertices, light, overlay, red, green, blue, alpha);
             }
         }
