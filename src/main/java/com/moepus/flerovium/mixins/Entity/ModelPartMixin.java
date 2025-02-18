@@ -46,7 +46,7 @@ public class ModelPartMixin {
         //noinspection ForLoopReplaceableByForEach
         for(int i = 0; i < cubes.size(); i++) {
             var cube = cubes.get(i);
-            var simpleCuboid = ((ModelCuboidAccessor)cube).embeddium$getSimpleCuboid();
+            var simpleCuboid = ((ModelCuboidAccessor)cube).sodium$copy();
             if(simpleCuboid != null) {
                 FastEntityRenderer.renderCuboidFast(matrixPose, writer, simpleCuboid, light, overlay, packedColor);
             } else {

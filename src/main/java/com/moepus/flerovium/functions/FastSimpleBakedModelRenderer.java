@@ -1,7 +1,7 @@
 package com.moepus.flerovium.functions;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import me.jellysquid.mods.sodium.client.model.color.interop.ItemColorsExtended;
+import me.jellysquid.mods.sodium.client.model.color.interop.ItemColorsExtension;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
 import net.caffeinemc.mods.sodium.api.util.ColorARGB;
@@ -152,7 +152,7 @@ public class FastSimpleBakedModelRenderer {
                               int packedOverlay, PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
         PoseStack.Pose pose = poseStack.last();
         prepareNormals(model, pose);
-        ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtended) itemColors).sodium$getColorProvider(itemStack) : null;
+        ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtension) itemColors).sodium$getColorProvider(itemStack) : null;
 
         LAST_TINT_INDEX = LAST_TINT = -1;
         for (Direction direction : Direction.values()) {
