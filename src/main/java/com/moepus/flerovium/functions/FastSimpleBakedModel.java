@@ -1,7 +1,9 @@
 package com.moepus.flerovium.functions;
 
 import com.moepus.flerovium.View.SimpleBakedModelView;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexSorting;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransform;
@@ -56,7 +58,7 @@ public class FastSimpleBakedModel implements BakedModel {
             return;
         }
         // In World
-        needExtraCulling = !((SimpleBakedModelView)model).hasUnassignedFaces() && pose.pose().m32() < -3.0F;
+        needExtraCulling = !((SimpleBakedModelView)model).hasUnassignedFaces() && pose.pose().m32() < -3.0F && RenderSystem.getModelViewMatrix().m32() == 0;
         if (transforms.gui == ItemTransform.NO_TRANSFORM && pose.pose().m32() < -12.0F) { // Item Far away
             face[Direction.NORTH.ordinal()] = true;
             face[Direction.SOUTH.ordinal()] = true;
