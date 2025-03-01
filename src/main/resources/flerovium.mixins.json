@@ -1,22 +1,17 @@
 {
   "required": true,
-  "minVersion": "0.8",
+  "minVersion": "0.8.5",
   "package": "com.moepus.flerovium.mixins",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "refmap": "flerovium.refmap.json",
-  "plugin": "com.moepus.flerovium.MixinPlugin",
   "mixins": [
-    "Chunk.OcclusionCullerMixin"
   ],
   "client": [
     "Entity.ClientLevelMixin",
-    "Entity.ModelPartMixin",
     "Item.ItemEntityRenderMixin",
     "Item.ItemRendererMixin",
     "Item.ItemTransformMixin",
     "Item.SimpleBakedModelMixin",
-    "Particle.ParticleEngineMixin",
-    "Particle.ParticleMixin",
     "Particle.SingleQuadParticleMixin"
   ],
   "injectors": {

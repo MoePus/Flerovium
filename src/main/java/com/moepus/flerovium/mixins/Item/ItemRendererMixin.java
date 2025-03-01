@@ -26,7 +26,7 @@ public abstract class ItemRendererMixin {
     @Shadow
     private ItemColors itemColors;
 
-    @Inject(method = "renderModelLists(Lnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/world/item/ItemStack;IILcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderModelLists", at = @At("HEAD"), cancellable = true)
     public void renderModelLists(BakedModel model, ItemStack itemStack, int packedLight, int packedOverlay, PoseStack poseStack, VertexConsumer vertexConsumer, CallbackInfo ci) {
         if (model instanceof FastSimpleBakedModel fastModel) {
             VertexBufferWriter writer = VertexBufferWriter.tryOf(vertexConsumer);

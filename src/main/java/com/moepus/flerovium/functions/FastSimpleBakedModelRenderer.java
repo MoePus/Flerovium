@@ -1,13 +1,13 @@
 package com.moepus.flerovium.functions;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import me.jellysquid.mods.sodium.client.model.color.interop.ItemColorsExtended;
-import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
+import net.caffeinemc.mods.sodium.api.texture.SpriteUtil;
 import net.caffeinemc.mods.sodium.api.util.ColorARGB;
 import net.caffeinemc.mods.sodium.api.util.NormI8;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
-import net.caffeinemc.mods.sodium.api.vertex.format.common.ModelVertex;
+import net.caffeinemc.mods.sodium.api.vertex.format.common.EntityVertex;
+import net.caffeinemc.mods.sodium.client.model.color.interop.ItemColorsExtension;
 import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -29,7 +29,7 @@ public class FastSimpleBakedModelRenderer {
     private static final int VERTEX_COUNT = 4;
     private static final int BUFFER_VERTEX_COUNT = 48;
     private static final int STRIDE = 8;
-    private static final long SCRATCH_BUFFER = MemoryUtil.nmemAlignedAlloc(64, BUFFER_VERTEX_COUNT * ModelVertex.STRIDE);
+    private static final long SCRATCH_BUFFER = MemoryUtil.nmemAlignedAlloc(64, BUFFER_VERTEX_COUNT * EntityVertex.STRIDE);
     private static long BUFFER_PTR = SCRATCH_BUFFER;
     private static int BUFFED_VERTEX = 0;
     private static final int[] CUBE_NORMALS = new int[Direction.values().length];
@@ -88,7 +88,7 @@ public class FastSimpleBakedModelRenderer {
     private static void flush(VertexBufferWriter writer) {
         if (BUFFED_VERTEX == 0) return;
         STACK.push();
-        writer.push(STACK, SCRATCH_BUFFER, BUFFED_VERTEX, ModelVertex.FORMAT);
+        writer.push(STACK, SCRATCH_BUFFER, BUFFED_VERTEX, EntityVertex.FORMAT);
         STACK.pop();
         BUFFER_PTR = SCRATCH_BUFFER;
         BUFFED_VERTEX = 0;
@@ -113,10 +113,10 @@ public class FastSimpleBakedModelRenderer {
         for (int index = 0; index < VERTEX_COUNT; index++) {
             final float x = Float.intBitsToFloat(vertices[READ_PTR]), y = Float.intBitsToFloat(vertices[READ_PTR + 1]), z = Float.intBitsToFloat(vertices[READ_PTR + 2]);
             final int u = vertices[READ_PTR + 4], v = vertices[READ_PTR + 5];
-            ModelVertex.write(WRITE_PTR, MatrixHelper.transformPositionX(pose_matrix, x, y, z), MatrixHelper.transformPositionY(pose_matrix, x, y, z), MatrixHelper.transformPositionZ(pose_matrix, x, y, z), c, Float.intBitsToFloat(u), Float.intBitsToFloat(v), overlay, l, n);
+            EntityVertex.write(WRITE_PTR, MatrixHelper.transformPositionX(pose_matrix, x, y, z), MatrixHelper.transformPositionY(pose_matrix, x, y, z), MatrixHelper.transformPositionZ(pose_matrix, x, y, z), c, Float.intBitsToFloat(u), Float.intBitsToFloat(v), overlay, l, n);
 
             READ_PTR += STRIDE;
-            WRITE_PTR += ModelVertex.STRIDE;
+            WRITE_PTR += EntityVertex.STRIDE;
         }
 
         BUFFER_PTR = WRITE_PTR;
@@ -143,7 +143,7 @@ public class FastSimpleBakedModelRenderer {
         }
         if (pose.pose().m32() > -8.0F) { // Do animation for item in GUI or nearby in world
             for (BakedQuad bakedQuad : bakedQuads) {
-                SpriteUtil.markSpriteActive(bakedQuad.getSprite());
+                SpriteUtil.INSTANCE.markSpriteActive(bakedQuad.getSprite());
             }
         }
     }
@@ -152,7 +152,7 @@ public class FastSimpleBakedModelRenderer {
                               int packedOverlay, PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
         PoseStack.Pose pose = poseStack.last();
         prepareNormals(model, pose);
-        ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtended) itemColors).sodium$getColorProvider(itemStack) : null;
+        ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtension) itemColors).sodium$getColorProvider(itemStack) : null;
 
         LAST_TINT_INDEX = LAST_TINT = -1;
         for (Direction direction : Direction.values()) {

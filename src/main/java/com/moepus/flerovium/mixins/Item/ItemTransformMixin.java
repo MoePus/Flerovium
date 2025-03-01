@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static net.minecraftforge.common.util.TransformationHelper.quatFromXYZ;
+import static net.neoforged.neoforge.common.util.TransformationHelper.quatFromXYZ;
 import com.moepus.flerovium.functions.MatrixStuff;
 
 @Mixin(ItemTransform.class)
