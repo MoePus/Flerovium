@@ -58,11 +58,14 @@ public class FastSimpleBakedModel implements BakedModel {
             return;
         }
         // In World
-        needExtraCulling = !((SimpleBakedModelView)model).hasUnassignedFaces() && pose.pose().m32() < -3.0F && RenderSystem.getModelViewMatrix().m32() == 0;
-        if (transforms.gui == ItemTransform.NO_TRANSFORM && pose.pose().m32() < -12.0F) { // Item Far away
-            face[Direction.NORTH.ordinal()] = true;
-            face[Direction.SOUTH.ordinal()] = true;
-            return;
+        needExtraCulling = !((SimpleBakedModelView) model).hasUnassignedFaces() && RenderSystem.getModelViewMatrix().m32() == 0;
+        if (transforms.gui == ItemTransform.NO_TRANSFORM) { // Non Block Item Far away
+            float distance = pose.pose().m30() * pose.pose().m30() + pose.pose().m31() * pose.pose().m31() + pose.pose().m32() * pose.pose().m32();
+            if (distance > 144.0F) {
+                face[Direction.NORTH.ordinal()] = true;
+                face[Direction.SOUTH.ordinal()] = true;
+                return;
+            }
         }
 
         // Objects near the camera or Blocks far away

@@ -7,8 +7,7 @@ import net.caffeinemc.mods.sodium.api.util.ColorARGB;
 import net.caffeinemc.mods.sodium.api.util.NormI8;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.vertex.format.common.EntityVertex;
-import net.caffeinemc.mods.sodium.client.model.color.interop.ItemColorsExtension;
-import net.minecraft.client.color.item.ItemColor;
+import net.caffeinemc.mods.sodium.client.model.quad.BakedQuadView;
 import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
@@ -16,7 +15,6 @@ import net.minecraft.world.item.ItemStack;
 import org.joml.Math;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
@@ -32,34 +30,15 @@ public class FastSimpleBakedModelRenderer {
     private static final long SCRATCH_BUFFER = MemoryUtil.nmemAlignedAlloc(64, BUFFER_VERTEX_COUNT * EntityVertex.STRIDE);
     private static long BUFFER_PTR = SCRATCH_BUFFER;
     private static int BUFFED_VERTEX = 0;
-    private static final int[] CUBE_NORMALS = new int[Direction.values().length];
-    private static int LAST_TINT_INDEX = -1;
-    private static int LAST_TINT = -1;
-    private static final int DONT_RENDER = -1;
+    private static final boolean[] SHOULD_RENDER = new boolean[Direction.values().length];
 
-
-    public static void prepareNormals(FastSimpleBakedModel model, PoseStack.Pose pose) {
-        Matrix4f mat = pose.pose();
-
-        CUBE_NORMALS[0] = model.shouldRenderFace(Direction.DOWN) ? normal2Int(-mat.m10(), -mat.m11(), -mat.m12()) : DONT_RENDER;
-        CUBE_NORMALS[1] = model.shouldRenderFace(Direction.UP) ? normal2Int(mat.m10(), mat.m11(), mat.m12()) : DONT_RENDER;
-        CUBE_NORMALS[2] = model.shouldRenderFace(Direction.NORTH) ? normal2Int(-mat.m20(), -mat.m21(), -mat.m22()) : DONT_RENDER;
-        CUBE_NORMALS[3] = model.shouldRenderFace(Direction.SOUTH) ? normal2Int(mat.m20(), mat.m21(), mat.m22()) : DONT_RENDER;
-        CUBE_NORMALS[4] = model.shouldRenderFace(Direction.WEST) ? normal2Int(-mat.m00(), -mat.m01(), -mat.m02()) : DONT_RENDER;
-        CUBE_NORMALS[5] = model.shouldRenderFace(Direction.EAST) ? normal2Int(mat.m00(), mat.m01(), mat.m02()) : DONT_RENDER;
-
-
-        if (model.isNeedExtraCulling()) {
-            float scalar = 127 * Math.invsqrt(Math.fma(mat.m30(), mat.m30(), Math.fma(mat.m31(), mat.m31(), mat.m32() * mat.m32())));
-            byte viewX = (byte) (mat.m30() * scalar);
-            byte viewY = (byte) (mat.m31() * scalar);
-            byte viewZ = (byte) (mat.m32() * scalar);
-            for (int i = 0; i < 6; i++) {
-                if (CUBE_NORMALS[i] != DONT_RENDER && cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[i])) {
-                    CUBE_NORMALS[i] = DONT_RENDER;
-                }
-            }
-        }
+    public static void prepareFaces(FastSimpleBakedModel model) {
+        SHOULD_RENDER[0] = model.shouldRenderFace(Direction.DOWN);
+        SHOULD_RENDER[1] = model.shouldRenderFace(Direction.UP);
+        SHOULD_RENDER[2] = model.shouldRenderFace(Direction.NORTH);
+        SHOULD_RENDER[3] = model.shouldRenderFace(Direction.SOUTH);
+        SHOULD_RENDER[4] = model.shouldRenderFace(Direction.WEST);
+        SHOULD_RENDER[5] = model.shouldRenderFace(Direction.EAST);
     }
 
     private static int getQuadNormal(Matrix3f mat, int baked) {
@@ -124,41 +103,35 @@ public class FastSimpleBakedModelRenderer {
         if (isBufferMax()) flush(writer);
     }
 
-    public static int GetItemTint(int tintIndex, ItemStack itemStack, ItemColor colorProvider) {
-        if (tintIndex == LAST_TINT_INDEX) return LAST_TINT;
-        int tint = colorProvider.getColor(itemStack, tintIndex);
-        LAST_TINT = ColorARGB.toABGR(tint, 255);
-        LAST_TINT_INDEX = tintIndex;
-        return LAST_TINT;
-    }
-
     private static void renderQuadList(PoseStack.Pose pose, VertexBufferWriter
-            writer, List<BakedQuad> bakedQuads, int light, int overlay, ItemStack itemStack, ItemColor
-                                               colorProvider) {
+            writer, List<BakedQuad> bakedQuads, int light, int overlay, ItemStack itemStack, ItemColors
+                                               itemColors) {
         for (BakedQuad bakedQuad : bakedQuads) {
-            int normal = CUBE_NORMALS[bakedQuad.getDirection().ordinal()];
-            if (normal == DONT_RENDER) continue;
-            int color = colorProvider != null && bakedQuad.getTintIndex() != -1 ? GetItemTint(bakedQuad.getTintIndex(), itemStack, colorProvider) : -1;
-            putBulkData(writer, pose, bakedQuad, light, overlay, color);
-        }
-        if (pose.pose().m32() > -8.0F) { // Do animation for item in GUI or nearby in world
-            for (BakedQuad bakedQuad : bakedQuads) {
-                SpriteUtil.INSTANCE.markSpriteActive(bakedQuad.getSprite());
+            BakedQuadView quad = (BakedQuadView) bakedQuad;
+            if(!SHOULD_RENDER[bakedQuad.getDirection().ordinal()]) {
+                if (quad.getSprite() != null)
+                    SpriteUtil.INSTANCE.markSpriteActive(quad.getSprite());
+                continue;
             }
+            int color = 0xFFFFFFFF;
+            if (quad.hasColor()) {
+                color = ColorARGB.toABGR((itemColors.getColor(itemStack, quad.getColorIndex())));
+            }
+            putBulkData(writer, pose, bakedQuad, light, overlay, color);
+            if (quad.getSprite() != null)
+                SpriteUtil.INSTANCE.markSpriteActive(quad.getSprite());
         }
     }
 
     public static void render(FastSimpleBakedModel model, ItemStack itemStack, int packedLight,
                               int packedOverlay, PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
         PoseStack.Pose pose = poseStack.last();
-        prepareNormals(model, pose);
-        ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtension) itemColors).sodium$getColorProvider(itemStack) : null;
+        prepareFaces(model);
 
-        LAST_TINT_INDEX = LAST_TINT = -1;
         for (Direction direction : Direction.values()) {
-            renderQuadList(pose, writer, model.getQuads(null, direction, null), packedLight, packedOverlay, itemStack, colorProvider);
+            renderQuadList(pose, writer, model.getQuads(null, direction, null), packedLight, packedOverlay, itemStack, itemColors);
         }
-        renderQuadList(pose, writer, model.getQuads(null, null, null), packedLight, packedOverlay, itemStack, colorProvider);
+        renderQuadList(pose, writer, model.getQuads(null, null, null), packedLight, packedOverlay, itemStack, itemColors);
 
         flush(writer);
     }

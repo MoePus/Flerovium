@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 import java.util.Map;
 
-@Mixin(SimpleBakedModel.class)
+@Mixin(value = SimpleBakedModel.class, remap = false)
 public abstract class SimpleBakedModelMixin implements SimpleBakedModelView, IBakedModelExtension {
     @Shadow
     @Final

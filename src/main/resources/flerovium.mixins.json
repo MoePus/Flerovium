@@ -4,7 +4,9 @@
   "package": "com.moepus.flerovium.mixins",
   "compatibilityLevel": "JAVA_21",
   "refmap": "flerovium.refmap.json",
+  "plugin": "com.moepus.flerovium.MixinPlugin",
   "mixins": [
+    "Entity.EntityRendererMixin"
   ],
   "client": [
     "Entity.ClientLevelMixin",

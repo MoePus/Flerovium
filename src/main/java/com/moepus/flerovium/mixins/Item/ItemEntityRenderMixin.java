@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import static net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
 
-@Mixin(ItemEntityRenderer.class)
+@Mixin(value = ItemEntityRenderer.class, remap = false)
 public abstract class ItemEntityRenderMixin extends EntityRenderer<ItemEntity> {
     protected ItemEntityRenderMixin(EntityRendererProvider.Context p_174008_) {
         super(p_174008_);

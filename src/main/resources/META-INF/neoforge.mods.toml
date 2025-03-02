@@ -88,7 +88,7 @@ description='''${mod_description}'''
 [[dependencies.${mod_id}]]
     modId="sodium"
     type="required"
-    versionRange="[0.7,)"
+    versionRange="[0.6.9,)"
     ordering="NONE"
     side="BOTH"
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares

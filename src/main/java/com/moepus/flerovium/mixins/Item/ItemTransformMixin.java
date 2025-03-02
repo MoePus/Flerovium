@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import static net.neoforged.neoforge.common.util.TransformationHelper.quatFromXYZ;
 import com.moepus.flerovium.functions.MatrixStuff;
 
-@Mixin(ItemTransform.class)
+@Mixin(value = ItemTransform.class, remap = false)
 public abstract class ItemTransformMixin {
     @Final
     @Shadow
