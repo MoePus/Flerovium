@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
 import net.caffeinemc.mods.sodium.client.render.immediate.model.EntityRenderer;
 import net.caffeinemc.mods.sodium.client.render.immediate.model.ModelCuboid;
-import net.caffeinemc.mods.sodium.client.util.Int2;
 import org.joml.Matrix3f;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,7 +19,7 @@ public abstract class EntityRendererMixin {
     }
 
     @Unique
-    private static int flerovium$FACE;
+    private static int flerovium$FACE = ~0;
 
     /**
      * @author MoePus

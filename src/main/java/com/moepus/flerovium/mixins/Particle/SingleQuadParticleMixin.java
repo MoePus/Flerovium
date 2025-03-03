@@ -26,7 +26,7 @@ import org.lwjgl.system.MemoryStack;
 @Mixin(value = SingleQuadParticle.class, priority = 100)
 public abstract class SingleQuadParticleMixin extends Particle {
     @Unique
-    long flerovium$lastTick = 0;
+    long flerovium$lastTick = -1;
 
     @Unique
     int flerovium$cachedLight = 0;
@@ -42,7 +42,7 @@ public abstract class SingleQuadParticleMixin extends Particle {
             return flerovium$cachedLight;
         }
         flerovium$lastTick = tickCount;
-        flerovium$cachedLight = getLightColor(pt);
+        flerovium$cachedLight = super.getLightColor(pt);
         return flerovium$cachedLight;
     }
     // renderFast has been merged into sodium
