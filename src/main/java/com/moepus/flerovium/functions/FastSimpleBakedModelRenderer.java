@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
 import net.caffeinemc.mods.sodium.api.texture.SpriteUtil;
 import net.caffeinemc.mods.sodium.api.util.ColorARGB;
+import net.caffeinemc.mods.sodium.api.util.ColorMixer;
 import net.caffeinemc.mods.sodium.api.util.NormI8;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.vertex.format.common.EntityVertex;
@@ -57,13 +58,6 @@ public class FastSimpleBakedModelRenderer {
         return packSafe(x, y, z);
     }
 
-    public static int multiplyIntBytes(int a, int b) {
-        int first = ((a & 0xff) * (b & 0xff) + 127) / 255;
-        int second = (((a >>> 8) & 0xff) * ((b >>> 8) & 0xff) + 127) / 255;
-        int third = (((a >>> 16) & 0xff) * ((b >>> 16) & 0xff) + 127) / 255;
-        return first | second << 8 | third << 16 | (b & 0xff000000);
-    }
-
     private static void flush(VertexBufferWriter writer) {
         if (BUFFED_VERTEX == 0) return;
         STACK.push();
@@ -83,7 +77,7 @@ public class FastSimpleBakedModelRenderer {
         if (vertices.length != VERTEX_COUNT * STRIDE) return;
         Matrix4f pose_matrix = pose.pose();
         final int n = getQuadNormal(pose.normal(), vertices[7]);
-        final int c = color != -1 ? multiplyIntBytes(color, vertices[3]) : vertices[3];
+        final int c = color != -1 ? ColorMixer.mulComponentWise(color, vertices[3]) : vertices[3];
         final int baked = vertices[6];
         final int l = Math.max(((baked & 0xffff) << 16) | (baked >> 16), light);
         final long buffer = BUFFER_PTR;
@@ -108,7 +102,7 @@ public class FastSimpleBakedModelRenderer {
                                                itemColors) {
         for (BakedQuad bakedQuad : bakedQuads) {
             BakedQuadView quad = (BakedQuadView) bakedQuad;
-            if(!SHOULD_RENDER[bakedQuad.getDirection().ordinal()]) {
+            if (!SHOULD_RENDER[bakedQuad.getDirection().ordinal()]) {
                 if (quad.getSprite() != null)
                     SpriteUtil.INSTANCE.markSpriteActive(quad.getSprite());
                 continue;
