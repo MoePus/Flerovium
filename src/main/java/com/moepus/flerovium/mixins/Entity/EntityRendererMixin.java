@@ -83,20 +83,19 @@ public abstract class EntityRendererMixin {
         if (matrices.pose().m32() <= -16.0F && RenderSystem.getModelViewMatrix().m32() == 0) {
             Matrix3f normal = matrices.normal();
 
-// We dont know if this cuboid is mirrored or not, so dont cull +-x faces
-//            float posX = c000x + c011x;
-//            float posY = c000y + c011y;
-//            float posZ = c000z + c011z;
-//            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 < 0) flerovium$FACE &= ~(1 << FACE_POS_X);
-//
-//            posX = c100x + c111x;
-//            posY = c100y + c111y;
-//            posZ = c100z + c111z;
-//            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 > 0) flerovium$FACE &= ~(1 << FACE_NEG_X);
+            float posX = c000x + c011x;
+            float posY = c000y + c011y;
+            float posZ = c000z + c011z;
+            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 < 0) flerovium$FACE &= ~(1 << (cuboid.sizeX > 0 ? FACE_POS_X : FACE_NEG_X));
 
-            float posX = c000x + c110x;
-            float posY = c000y + c110y;
-            float posZ = c000z + c110z;
+            posX = c100x + c111x;
+            posY = c100y + c111y;
+            posZ = c100z + c111z;
+            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 > 0) flerovium$FACE &= ~(1 << (cuboid.sizeX > 0 ? FACE_NEG_X : FACE_POS_X));
+
+            posX = c000x + c110x;
+            posY = c000y + c110y;
+            posZ = c000z + c110z;
             if (posX * normal.m20 + posY * normal.m21 + posZ * normal.m22 < 0) flerovium$FACE &= ~(1 << FACE_NEG_Z);
 
             posX = c001x + c111x;
