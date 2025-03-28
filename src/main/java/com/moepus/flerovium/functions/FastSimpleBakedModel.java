@@ -58,7 +58,7 @@ public class FastSimpleBakedModel implements BakedModel {
             return;
         }
         // In World
-        needExtraCulling = !((SimpleBakedModelView) model).hasUnassignedFaces() && RenderSystem.getModelViewMatrix().m32() == 0;
+        needExtraCulling = !((SimpleBakedModelView) model).hasUnassignedFaces() && RenderSystem.modelViewMatrix.m32() == 0;
         if (transforms.gui == ItemTransform.NO_TRANSFORM) { // Non Block Item Far away
             float distance = pose.pose().m30() * pose.pose().m30() + pose.pose().m31() * pose.pose().m31() + pose.pose().m32() * pose.pose().m32();
             if (distance > 144.0F) {
