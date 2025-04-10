@@ -1,5 +1,6 @@
 package com.moepus.flerovium.mixins.Chunk;
 
+import com.moepus.flerovium.functions.Chunk.FastViewport;
 import com.moepus.flerovium.functions.Chunk.Occlusion;
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSection;
 import me.jellysquid.mods.sodium.client.render.chunk.occlusion.GraphDirectionSet;
@@ -26,7 +27,6 @@ public abstract class OcclusionCullerMixin {
     @Shadow
     private static void visitNeighbors(final WriteQueue<RenderSection> queue, RenderSection section, int outgoing, int frame) {
     }
-
 
     /**
      * @author MoePus
@@ -93,5 +93,14 @@ public abstract class OcclusionCullerMixin {
         }
 
         return visibilityData & ~mask;
+    }
+
+    /**
+     * @author MoePus
+     * @reason Faster AABB test
+     */
+    @Overwrite
+    public static boolean isWithinFrustum(Viewport viewport, RenderSection section) {
+        return ((FastViewport) (Object) viewport).isSectionVisible(section.getCenterX(), section.getCenterY(), section.getCenterZ());
     }
 }
