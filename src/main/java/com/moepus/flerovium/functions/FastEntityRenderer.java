@@ -245,7 +245,6 @@ public class FastEntityRenderer {
         CUBE_CORNERS[VERTEX_X1_Y1_Z1].set(p1x, p1y, p1z, color);
 
         float lx = cuboid.x2 - cuboid.x1, ly = cuboid.y2 - cuboid.y1, lz = cuboid.z2 - cuboid.z1;
-        if (ly == 0) FACE = ~0;
         float vxx = pose.m00() * lx, vxy = pose.m01() * lx, vxz = pose.m02() * lx;
         float vyx = pose.m10() * ly, vyy = pose.m11() * ly, vyz = pose.m12() * ly;
         float vzx = pose.m20() * lz, vzy = pose.m21() * lz, vzz = pose.m22() * lz;
@@ -293,7 +292,7 @@ public class FastEntityRenderer {
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_POS_X], cuboid.u0, cuboid.v1, cuboid.u1, cuboid.v2);
 
         FACE = ~0;
-        if (matrices.pose().m32() <= -16.0F && RenderSystem.getModelViewMatrix().m32() == 0) {
+        if (matrices.pose().m32() <= -16.0F && RenderSystem.getModelViewMatrix().m32() == 0 && ly != 0) {
             Matrix3f normal = matrices.normal();
 
             float posX = p1x + p8x;
