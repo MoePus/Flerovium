@@ -5,7 +5,7 @@ import org.joml.FrustumIntersection;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(SimpleFrustum.class)
+@Mixin(value = SimpleFrustum.class, remap = false)
 public interface SimpleFrustumAccessor {
     @Accessor
     FrustumIntersection getFrustum();
