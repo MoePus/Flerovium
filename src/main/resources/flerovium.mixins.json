@@ -8,7 +8,7 @@
   "mixins": [
     "Chunk.OcclusionCullerMixin",
     "Chunk.SimpleFrustumAccessor",
-    "Chunk.ViewportMixin"
+    "Chunk.SimpleFrustumMixin"
   ],
   "client": [
     "Entity.ClientLevelMixin",
