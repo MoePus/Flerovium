@@ -168,6 +168,7 @@ dependencies {
         jarJar.ranged(it, "[0.4.1,)")
     }
     implementation fg.deobf("org.embeddedt:embeddium-${minecraft_version}:0.3.31-beta.53+mc${minecraft_version}")
+    runtimeOnly fg.deobf("curse.maven:oculus-581495:6020952")
     // runtimeOnly fg.deobf("curse.maven:moonlight-499980:5938277")
     // runtimeOnly fg.deobf("curse.maven:supplementaries-412082:5928556")
     // runtimeOnly fg.deobf("curse.maven:ftbteams-404468:5267190")
