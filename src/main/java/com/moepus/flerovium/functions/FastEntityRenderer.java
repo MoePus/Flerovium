@@ -298,12 +298,14 @@ public class FastEntityRenderer {
             float posX = p1x + p8x;
             float posY = p1y + p8y;
             float posZ =  p1z + p8z;
-            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 < 0) FACE &= ~(1 << FACE_POS_X);
+            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 < 0)
+                FACE &= ~(1 << (lx > 0 ? FACE_POS_X: FACE_NEG_X));
 
             posX = p2x + p7x;
             posY = p2y + p7y;
             posZ = p2z + p7z;
-            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 > 0) FACE &= ~(1 << FACE_NEG_X);
+            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 > 0)
+                FACE &= ~(1 << (lx < 0 ? FACE_POS_X: FACE_NEG_X));
 
             posX = p1x + p3x;
             posY = p1y + p3y;
