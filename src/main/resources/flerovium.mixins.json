@@ -6,11 +6,10 @@
   "refmap": "flerovium.refmap.json",
   "plugin": "com.moepus.flerovium.MixinPlugin",
   "mixins": [
-    "Chunk.OcclusionCullerMixin",
-    "Chunk.SimpleFrustumAccessor",
-    "Chunk.SimpleFrustumMixin"
+    "Chunk.OcclusionCullerMixin"
   ],
   "client": [
+    "Chunk.FrustumMixin",
     "Entity.ClientLevelMixin",
     "Entity.ModelPartMixin",
     "Item.ItemEntityRenderMixin",

@@ -1,13 +1,12 @@
 package com.moepus.flerovium.functions.Chunk;
 
-import com.moepus.flerovium.mixins.Chunk.SimpleFrustumAccessor;
-import me.jellysquid.mods.sodium.client.render.viewport.frustum.SimpleFrustum;
+import me.jellysquid.mods.sodium.client.render.viewport.frustum.Frustum;
 import org.joml.FrustumIntersection;
 import org.joml.Vector4f;
 
 import java.lang.reflect.Field;
 
-public class FastSimpleFrustum {
+public class FastSimpleFrustum implements Frustum {
     // The bounding box of a chunk section must be large enough to contain all possible geometry within it. Block models
     // can extend outside a block volume by +/- 1.0 blocks on all axis. Additionally, we make use of a small epsilon
     // to deal with floating point imprecision during a frustum check (see GH#2132).
@@ -21,8 +20,8 @@ public class FastSimpleFrustum {
     private float pyX, pyY, pyZ, negPyW;
     private float nzX, nzY, nzZ, negNzW;
 
-    public FastSimpleFrustum(Object frustum) {
-        Vector4f[] planes = getFrustumPlanes(frustum);
+    public FastSimpleFrustum(FrustumIntersection frustumIntersection) {
+        Vector4f[] planes = getFrustumPlanes(frustumIntersection);
 
         nxX = planes[0].x;
         nxY = planes[0].y;
@@ -58,8 +57,7 @@ public class FastSimpleFrustum {
                 nzZ * (nzZ < 0 ? -size : size)));
     }
 
-    private static Vector4f[] getFrustumPlanes(Object frustum) {
-        FrustumIntersection frustumIntersection = ((SimpleFrustumAccessor) frustum).getFrustum();
+    private static Vector4f[] getFrustumPlanes(Object frustumIntersection) {
         Vector4f[] planes;
         try {
             Field planesField = FrustumIntersection.class.getDeclaredField("planes");
@@ -78,5 +76,10 @@ public class FastSimpleFrustum {
                 nyX * wx + nyY * wy + nyZ * wz >= negNyW &&
                 pyX * wx + pyY * wy + pyZ * wz >= negPyW &&
                 nzX * wx + nzY * wy + nzZ * wz >= negNzW;
+    }
+
+    @Override
+    public boolean testAab(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
+        return testCubeQuick(minX + maxX, minY + maxY, minZ + maxZ);
     }
 }
