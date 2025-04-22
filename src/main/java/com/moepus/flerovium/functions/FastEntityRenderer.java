@@ -331,12 +331,12 @@ public class FastEntityRenderer {
 
     public static void prepareNormals(PoseStack.Pose matrices) {
         Matrix3f normal = matrices.normal();
-        CUBE_NORMALS[FACE_NEG_Y] = normal2Int(-normal.m10, -normal.m11, -normal.m12);
-        CUBE_NORMALS[FACE_POS_Y] = normal2Int(normal.m10, normal.m11, normal.m12);
-        CUBE_NORMALS[FACE_NEG_Z] = normal2Int(-normal.m20, -normal.m21, -normal.m22);
-        CUBE_NORMALS[FACE_POS_Z] = normal2Int(normal.m20, normal.m21, normal.m22);
-        CUBE_NORMALS[FACE_POS_X] = normal2Int(-normal.m00, -normal.m01, -normal.m02);
-        CUBE_NORMALS[FACE_NEG_X] = normal2Int(normal.m00, normal.m01, normal.m02);
+        CUBE_NORMALS[FACE_NEG_Y] = normal2IntClamp(-normal.m10, -normal.m11, -normal.m12);
+        CUBE_NORMALS[FACE_POS_Y] = normal2IntClamp(normal.m10, normal.m11, normal.m12);
+        CUBE_NORMALS[FACE_NEG_Z] = normal2IntClamp(-normal.m20, -normal.m21, -normal.m22);
+        CUBE_NORMALS[FACE_POS_Z] = normal2IntClamp(normal.m20, normal.m21, normal.m22);
+        CUBE_NORMALS[FACE_POS_X] = normal2IntClamp(-normal.m00, -normal.m01, -normal.m02);
+        CUBE_NORMALS[FACE_NEG_X] = normal2IntClamp(normal.m00, normal.m01, normal.m02);
     }
 
     private static void buildVertexTexCoord(long[] uvs, float u1, float v1, float u2, float v2) {

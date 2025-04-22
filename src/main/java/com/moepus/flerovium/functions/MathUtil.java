@@ -1,5 +1,6 @@
 package com.moepus.flerovium.functions;
 
+import net.minecraft.util.Mth;
 import org.joml.Math;
 
 public class MathUtil {
@@ -51,6 +52,10 @@ public class MathUtil {
     public static int normal2Int(float x, float y, float z) {
         float scalar = Math.invsqrt(Math.fma(x, x, Math.fma(y, y, z * z)));
         return packUnsafe(x * scalar, y * scalar, z * scalar);
+    }
+
+    public static int normal2IntClamp(float x, float y, float z) {
+        return packUnsafe(Mth.clamp(x, -1.0F, 1.0F), Mth.clamp(y, -1.0F, 1.0F), Mth.clamp(z, -1.0F, 1.0F));
     }
 
     public static boolean cullBackFace(byte viewX, byte viewY, byte viewZ, int normal) {
