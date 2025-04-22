@@ -16,6 +16,10 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 public class ModelPartMixin {
     @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V", at = @At("HEAD"), cancellable = true)
     private void onRender(PoseStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha, CallbackInfo ci) {
+        if ((Object) this.getClass() != ModelPart.class) {
+            return;
+        }
+
         VertexBufferWriter writer = VertexConsumerUtils.convertOrLog(vertices);
 
         if (writer == null) {
