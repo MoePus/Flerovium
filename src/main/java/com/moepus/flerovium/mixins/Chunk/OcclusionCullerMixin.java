@@ -42,12 +42,10 @@ public abstract class OcclusionCullerMixin {
         RenderSection section;
 
         while ((section = readQueue.dequeue()) != null) {
-            boolean visible = isSectionVisible(section, viewport, searchDistance);
-            visitor.visit(section, visible);
-
-            if (!visible) {
+            if (!isSectionVisible(section, viewport, searchDistance)) {
                 continue;
             }
+            visitor.visit(section, true);
 
             int connections;
             {
