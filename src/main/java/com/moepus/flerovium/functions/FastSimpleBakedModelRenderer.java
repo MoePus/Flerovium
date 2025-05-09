@@ -2,6 +2,8 @@ package com.moepus.flerovium.functions;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import me.jellysquid.mods.sodium.client.model.color.interop.ItemColorsExtended;
+import me.jellysquid.mods.sodium.client.model.quad.BakedQuadView;
+import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
 import net.caffeinemc.mods.sodium.api.util.ColorARGB;
@@ -11,6 +13,7 @@ import net.caffeinemc.mods.sodium.api.vertex.format.common.ModelVertex;
 import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.SimpleBakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Math;
@@ -32,51 +35,8 @@ public class FastSimpleBakedModelRenderer {
     private static final long SCRATCH_BUFFER = MemoryUtil.nmemAlignedAlloc(64, BUFFER_VERTEX_COUNT * ModelVertex.STRIDE);
     private static long BUFFER_PTR = SCRATCH_BUFFER;
     private static int BUFFED_VERTEX = 0;
-    private static final int[] CUBE_NORMALS = new int[Direction.values().length];
     private static int LAST_TINT_INDEX = -1;
     private static int LAST_TINT = -1;
-    private static final int DONT_RENDER = -1;
-
-
-    public static void prepareNormals(FastSimpleBakedModel model, PoseStack.Pose pose) {
-        Matrix4f mat = pose.pose();
-
-        CUBE_NORMALS[0] = model.shouldRenderFace(Direction.DOWN) ? normal2Int(-mat.m10(), -mat.m11(), -mat.m12()) : DONT_RENDER;
-        CUBE_NORMALS[1] = model.shouldRenderFace(Direction.UP) ? normal2Int(mat.m10(), mat.m11(), mat.m12()) : DONT_RENDER;
-        CUBE_NORMALS[2] = model.shouldRenderFace(Direction.NORTH) ? normal2Int(-mat.m20(), -mat.m21(), -mat.m22()) : DONT_RENDER;
-        CUBE_NORMALS[3] = model.shouldRenderFace(Direction.SOUTH) ? normal2Int(mat.m20(), mat.m21(), mat.m22()) : DONT_RENDER;
-        CUBE_NORMALS[4] = model.shouldRenderFace(Direction.WEST) ? normal2Int(-mat.m00(), -mat.m01(), -mat.m02()) : DONT_RENDER;
-        CUBE_NORMALS[5] = model.shouldRenderFace(Direction.EAST) ? normal2Int(mat.m00(), mat.m01(), mat.m02()) : DONT_RENDER;
-
-
-        if (model.isNeedExtraCulling()) {
-            float scalar = 127 * Math.invsqrt(Math.fma(mat.m30(), mat.m30(), Math.fma(mat.m31(), mat.m31(), mat.m32() * mat.m32())));
-            byte viewX = (byte) (mat.m30() * scalar);
-            byte viewY = (byte) (mat.m31() * scalar);
-            byte viewZ = (byte) (mat.m32() * scalar);
-            for (int i = 0; i < 6; i++) {
-                if (CUBE_NORMALS[i] != DONT_RENDER && cullBackFace(viewX, viewY, viewZ, CUBE_NORMALS[i])) {
-                    CUBE_NORMALS[i] = DONT_RENDER;
-                }
-            }
-        }
-    }
-
-    private static int getQuadNormal(Matrix3f mat, int baked) {
-        final float factor = PACK_FACTOR[(baked & 0x808080) == 0 ? 0 : 1];
-        final int tmp = (baked - 0x7e7e7f) & 0xfdfdfd;
-        if ((tmp & 0xff0000) == 0) return packSafe(mat.m20, mat.m21, mat.m22, factor); // South_North
-        if ((tmp & 0xff) == 0) return packSafe(mat.m00, mat.m01, mat.m02, factor); // East_West
-        if ((tmp & 0xff00) == 0) return packSafe(mat.m10, mat.m11, mat.m12, factor); // Up_Down
-
-        float unpackedX = NormI8.unpackX(baked);
-        float unpackedY = NormI8.unpackY(baked);
-        float unpackedZ = NormI8.unpackZ(baked);
-        float x = MatrixHelper.transformNormalX(mat, unpackedX, unpackedY, unpackedZ);
-        float y = MatrixHelper.transformNormalY(mat, unpackedX, unpackedY, unpackedZ);
-        float z = MatrixHelper.transformNormalZ(mat, unpackedX, unpackedY, unpackedZ);
-        return packSafe(x, y, z);
-    }
 
     public static int multiplyIntBytes(int a, int b) {
         int first = ((a & 0xff) * (b & 0xff) + 127) / 255;
@@ -99,27 +59,67 @@ public class FastSimpleBakedModelRenderer {
     }
 
     private static void putBulkData(VertexBufferWriter writer, PoseStack.Pose pose, BakedQuad bakedQuad,
-                                    int light, int overlay, int color) {
+                                    int light, int overlay, int color, int faces) {
         int[] vertices = bakedQuad.getVertices();
         if (vertices.length != VERTEX_COUNT * STRIDE) return;
         Matrix4f pose_matrix = pose.pose();
-        final int n = getQuadNormal(pose.normal(), vertices[7]);
+        int baked_normal = vertices[7];
+        float unpackedX = NormI8.unpackX(baked_normal);
+        float unpackedY = NormI8.unpackY(baked_normal);
+        float unpackedZ = NormI8.unpackZ(baked_normal);
+        float nx = MatrixHelper.transformNormalX(pose.normal(), unpackedX, unpackedY, unpackedZ);
+        float ny = MatrixHelper.transformNormalY(pose.normal(), unpackedX, unpackedY, unpackedZ);
+        float nz = MatrixHelper.transformNormalZ(pose.normal(), unpackedX, unpackedY, unpackedZ);
+
+        float x = Float.intBitsToFloat(vertices[0]), y = Float.intBitsToFloat(vertices[1]), z = Float.intBitsToFloat(vertices[2]);
+        float pos0_x = MatrixHelper.transformPositionX(pose_matrix, x, y, z);
+        float pos0_y = MatrixHelper.transformPositionY(pose_matrix, x, y, z);
+        float pos0_z = MatrixHelper.transformPositionZ(pose_matrix, x, y, z);
+        x = Float.intBitsToFloat(vertices[STRIDE * 2]);
+        y = Float.intBitsToFloat(vertices[STRIDE * 2 + 1]);
+        z = Float.intBitsToFloat(vertices[STRIDE * 2 + 2]);
+
+        float pos2_x = MatrixHelper.transformPositionX(pose_matrix, x, y, z);
+        float pos2_y = MatrixHelper.transformPositionY(pose_matrix, x, y, z);
+        float pos2_z = MatrixHelper.transformPositionZ(pose_matrix, x, y, z);
+
+        if ((faces & 0b1000000) != 0) { // Backface culling
+            if ((pos0_x + pos2_x) * nx + (pos0_y + pos2_y) * ny + (pos0_z + pos2_z) * nz > 0)
+                if(((BakedQuadView)bakedQuad).getNormalFace() != ModelQuadFacing.UNASSIGNED)
+                    return;
+        }
+        int n = packUnsafe(nx, ny, nz);
+
+        x = Float.intBitsToFloat(vertices[STRIDE]);
+        y = Float.intBitsToFloat(vertices[STRIDE + 1]);
+        z = Float.intBitsToFloat(vertices[STRIDE + 2]);
+        float pos1_x = MatrixHelper.transformPositionX(pose_matrix, x, y, z);
+        float pos1_y = MatrixHelper.transformPositionY(pose_matrix, x, y, z);
+        float pos1_z = MatrixHelper.transformPositionZ(pose_matrix, x, y, z);
+
+        x = Float.intBitsToFloat(vertices[STRIDE * 3]);
+        y = Float.intBitsToFloat(vertices[STRIDE * 3 + 1]);
+        z = Float.intBitsToFloat(vertices[STRIDE * 3 + 2]);
+        float pos3_x = MatrixHelper.transformPositionX(pose_matrix, x, y, z);
+        float pos3_y = MatrixHelper.transformPositionY(pose_matrix, x, y, z);
+        float pos3_z = MatrixHelper.transformPositionZ(pose_matrix, x, y, z);
+
         final int c = color != -1 ? multiplyIntBytes(color, vertices[3]) : vertices[3];
         final int baked = vertices[6];
         final int l = Math.max(((baked & 0xffff) << 16) | (baked >> 16), light);
-        final long buffer = BUFFER_PTR;
-        int READ_PTR = 0;
-        long WRITE_PTR = buffer;
-        for (int index = 0; index < VERTEX_COUNT; index++) {
-            final float x = Float.intBitsToFloat(vertices[READ_PTR]), y = Float.intBitsToFloat(vertices[READ_PTR + 1]), z = Float.intBitsToFloat(vertices[READ_PTR + 2]);
-            final int u = vertices[READ_PTR + 4], v = vertices[READ_PTR + 5];
-            ModelVertex.write(WRITE_PTR, MatrixHelper.transformPositionX(pose_matrix, x, y, z), MatrixHelper.transformPositionY(pose_matrix, x, y, z), MatrixHelper.transformPositionZ(pose_matrix, x, y, z), c, Float.intBitsToFloat(u), Float.intBitsToFloat(v), overlay, l, n);
+        ModelVertex.write(BUFFER_PTR, pos0_x, pos0_y, pos0_z, c, Float.intBitsToFloat(vertices[4]),
+                Float.intBitsToFloat(vertices[5]), overlay, l, n);
+        BUFFER_PTR += ModelVertex.STRIDE;
+        ModelVertex.write(BUFFER_PTR, pos1_x, pos1_y, pos1_z, c, Float.intBitsToFloat(vertices[STRIDE + 4]),
+                Float.intBitsToFloat(vertices[STRIDE + 5]), overlay, l, n);
+        BUFFER_PTR += ModelVertex.STRIDE;
+        ModelVertex.write(BUFFER_PTR, pos2_x, pos2_y, pos2_z, c, Float.intBitsToFloat(vertices[STRIDE * 2 + 4]),
+                Float.intBitsToFloat(vertices[STRIDE * 2 + 5]), overlay, l, n);
+        BUFFER_PTR += ModelVertex.STRIDE;
+        ModelVertex.write(BUFFER_PTR, pos3_x, pos3_y, pos3_z, c, Float.intBitsToFloat(vertices[STRIDE * 3 + 4]),
+                Float.intBitsToFloat(vertices[STRIDE * 3 + 5]), overlay, l, n);
+        BUFFER_PTR += ModelVertex.STRIDE;
 
-            READ_PTR += STRIDE;
-            WRITE_PTR += ModelVertex.STRIDE;
-        }
-
-        BUFFER_PTR = WRITE_PTR;
         BUFFED_VERTEX += VERTEX_COUNT;
         if (isBufferMax()) flush(writer);
     }
@@ -132,14 +132,12 @@ public class FastSimpleBakedModelRenderer {
         return LAST_TINT;
     }
 
-    private static void renderQuadList(PoseStack.Pose pose, VertexBufferWriter
-            writer, List<BakedQuad> bakedQuads, int light, int overlay, ItemStack itemStack, ItemColor
-                                               colorProvider) {
+    private static void renderQuadList(PoseStack.Pose pose, VertexBufferWriter writer, int faces, List<BakedQuad> bakedQuads,
+                                       int light, int overlay, ItemStack itemStack, ItemColor colorProvider) {
         for (BakedQuad bakedQuad : bakedQuads) {
-            int normal = CUBE_NORMALS[bakedQuad.getDirection().ordinal()];
-            if (normal == DONT_RENDER) continue;
+            if((faces & (1 << bakedQuad.getDirection().ordinal())) == 0) continue;
             int color = colorProvider != null && bakedQuad.getTintIndex() != -1 ? GetItemTint(bakedQuad.getTintIndex(), itemStack, colorProvider) : -1;
-            putBulkData(writer, pose, bakedQuad, light, overlay, color);
+            putBulkData(writer, pose, bakedQuad, light, overlay, color, faces);
         }
         if (pose.pose().m32() > -8.0F) { // Do animation for item in GUI or nearby in world
             for (BakedQuad bakedQuad : bakedQuads) {
@@ -148,17 +146,16 @@ public class FastSimpleBakedModelRenderer {
         }
     }
 
-    public static void render(FastSimpleBakedModel model, ItemStack itemStack, int packedLight,
-                              int packedOverlay, PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
+    public static void render(SimpleBakedModel model, int faces, ItemStack itemStack, int packedLight, int packedOverlay,
+                              PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
         PoseStack.Pose pose = poseStack.last();
-        prepareNormals(model, pose);
         ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtended) itemColors).sodium$getColorProvider(itemStack) : null;
 
         LAST_TINT_INDEX = LAST_TINT = -1;
         for (Direction direction : Direction.values()) {
-            renderQuadList(pose, writer, model.getQuads(null, direction, null), packedLight, packedOverlay, itemStack, colorProvider);
+            renderQuadList(pose, writer, faces, model.getQuads(null, direction, null), packedLight, packedOverlay, itemStack, colorProvider);
         }
-        renderQuadList(pose, writer, model.getQuads(null, null, null), packedLight, packedOverlay, itemStack, colorProvider);
+        renderQuadList(pose, writer, faces, model.getQuads(null, null, null), packedLight, packedOverlay, itemStack, colorProvider);
 
         flush(writer);
     }

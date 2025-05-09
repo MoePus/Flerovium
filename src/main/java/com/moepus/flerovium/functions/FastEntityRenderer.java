@@ -286,7 +286,7 @@ public class FastEntityRenderer {
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_POS_X], cuboid.u2, cuboid.v1, cuboid.u4, cuboid.v2);
 
         FACE = ~0;
-        if (matrices.pose().m32() <= -16.0F && RenderSystem.getModelViewMatrix().m32() == 0 && ly != 0) {
+        if (matrices.pose().m32() <= -16.0F && RenderSystem.modelViewMatrix.m32() == 0 && ly != 0) {
             Matrix3f normal = matrices.normal();
 
             float posX = p1x + p8x;
