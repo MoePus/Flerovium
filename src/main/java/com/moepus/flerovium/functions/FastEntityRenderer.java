@@ -2,22 +2,16 @@ package com.moepus.flerovium.functions;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexSorting;
 import me.jellysquid.mods.sodium.client.render.immediate.model.ModelCuboid;
 import me.jellysquid.mods.sodium.client.render.immediate.model.ModelPartData;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
-import net.caffeinemc.mods.sodium.api.vertex.attributes.common.LightAttribute;
 import net.caffeinemc.mods.sodium.api.vertex.attributes.common.NormalAttribute;
-import net.caffeinemc.mods.sodium.api.vertex.attributes.common.OverlayAttribute;
-import net.caffeinemc.mods.sodium.api.vertex.attributes.common.TextureAttribute;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.vertex.format.common.ModelVertex;
 import net.minecraft.client.model.geom.ModelPart;
 import org.apache.commons.lang3.ArrayUtils;
 import org.embeddedt.embeddium.render.matrix_stack.CachingPoseStack;
 import org.joml.*;
-import org.joml.Math;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
