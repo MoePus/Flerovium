@@ -29,7 +29,7 @@ public class FastEntityRenderer {
     private static final int NUM_CUBE_FACES = 6;
     private static final int NUM_FACE_VERTICES = 4;
 
-    private static final int
+    private static final byte
             FACE_NEG_Y = 0, // DOWN
             FACE_POS_Y = 1, // UP
             FACE_NEG_Z = 2, // NORTH
@@ -37,7 +37,7 @@ public class FastEntityRenderer {
             FACE_NEG_X = 4, // WEST
             FACE_POS_X = 5; // EAST
 
-    private static final int
+    private static final byte
             VERTEX_X1_Y1_Z1 = 0,
             VERTEX_X2_Y1_Z1 = 1,
             VERTEX_X2_Y2_Z1 = 2,
@@ -62,13 +62,13 @@ public class FastEntityRenderer {
     }
 
     private static final Vertex[] CUBE_CORNERS = new Vertex[NUM_CUBE_VERTICES];
-    private static final int[][] CUBE_VERTICES = new int[][]{
+    private static final byte[][] CUBE_VERTICES = new byte[][]{
             {VERTEX_X2_Y1_Z2, VERTEX_X1_Y1_Z2, VERTEX_X1_Y1_Z1, VERTEX_X2_Y1_Z1},
             {VERTEX_X2_Y2_Z1, VERTEX_X1_Y2_Z1, VERTEX_X1_Y2_Z2, VERTEX_X2_Y2_Z2},
             {VERTEX_X2_Y1_Z1, VERTEX_X1_Y1_Z1, VERTEX_X1_Y2_Z1, VERTEX_X2_Y2_Z1},
             {VERTEX_X1_Y1_Z2, VERTEX_X2_Y1_Z2, VERTEX_X2_Y2_Z2, VERTEX_X1_Y2_Z2},
-            {VERTEX_X2_Y1_Z2, VERTEX_X2_Y1_Z1, VERTEX_X2_Y2_Z1, VERTEX_X2_Y2_Z2},
             {VERTEX_X1_Y1_Z1, VERTEX_X1_Y1_Z2, VERTEX_X1_Y2_Z2, VERTEX_X1_Y2_Z1},
+            {VERTEX_X2_Y1_Z2, VERTEX_X2_Y1_Z1, VERTEX_X2_Y2_Z1, VERTEX_X2_Y2_Z2},
     };
 
     private static final Vertex[][] VERTEX_POSITIONS = new Vertex[NUM_CUBE_FACES][NUM_FACE_VERTICES];
@@ -288,8 +288,8 @@ public class FastEntityRenderer {
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_POS_Y], cuboid.u2, cuboid.v1, cuboid.u3, cuboid.v0);
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_NEG_Z], cuboid.u1, cuboid.v1, cuboid.u2, cuboid.v2);
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_POS_Z], cuboid.u4, cuboid.v1, cuboid.u5, cuboid.v2);
-        buildVertexTexCoord(VERTEX_TEXTURES[FACE_NEG_X], cuboid.u2, cuboid.v1, cuboid.u4, cuboid.v2);
-        buildVertexTexCoord(VERTEX_TEXTURES[FACE_POS_X], cuboid.u0, cuboid.v1, cuboid.u1, cuboid.v2);
+        buildVertexTexCoord(VERTEX_TEXTURES[FACE_NEG_X], cuboid.u0, cuboid.v1, cuboid.u1, cuboid.v2);
+        buildVertexTexCoord(VERTEX_TEXTURES[FACE_POS_X], cuboid.u2, cuboid.v1, cuboid.u4, cuboid.v2);
 
         FACE = ~0;
         if (matrices.pose().m32() <= -16.0F && RenderSystem.getModelViewMatrix().m32() == 0 && ly != 0) {
@@ -297,15 +297,15 @@ public class FastEntityRenderer {
 
             float posX = p1x + p8x;
             float posY = p1y + p8y;
-            float posZ =  p1z + p8z;
+            float posZ = p1z + p8z;
             if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 < 0)
-                FACE &= ~(1 << (lx > 0 ? FACE_POS_X: FACE_NEG_X));
+                FACE &= ~(1 << (lx > 0 ? FACE_NEG_X: FACE_POS_X));
 
             posX = p2x + p7x;
             posY = p2y + p7y;
             posZ = p2z + p7z;
             if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 > 0)
-                FACE &= ~(1 << (lx < 0 ? FACE_POS_X: FACE_NEG_X));
+                FACE &= ~(1 << (lx < 0 ? FACE_NEG_X: FACE_POS_X));
 
             posX = p1x + p3x;
             posY = p1y + p3y;
