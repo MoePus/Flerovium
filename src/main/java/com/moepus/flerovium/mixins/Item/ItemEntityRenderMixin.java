@@ -35,7 +35,7 @@ public abstract class ItemEntityRenderMixin extends EntityRenderer<ItemEntity> {
         LocalPlayer player = Minecraft.getInstance().player;
         Vec3 eye = new Vec3(player.getX(), player.getY(), player.getZ());
         int maxRender = (int) Math.ceil(360.0F / eye.distanceToSqr(itemEntity.getX(), itemEntity.getY(), itemEntity.getZ()));
-        return Math.min(Math.min(count, (count - 1) / 16 + 2), maxRender);
+        return Math.min(Math.min(count, (count - 1) / 16 + 2), Math.min(maxRender, 5));
     }
 
     @Redirect(
