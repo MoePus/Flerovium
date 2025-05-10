@@ -88,7 +88,7 @@ public class FastSimpleBakedModelRenderer {
                 if(((BakedQuadView)bakedQuad).getNormalFace() != ModelQuadFacing.UNASSIGNED)
                     return;
         }
-        int n = packUnsafe(nx, ny, nz);
+        int n = packSafe(nx, ny, nz);
 
         x = Float.intBitsToFloat(vertices[STRIDE]);
         y = Float.intBitsToFloat(vertices[STRIDE + 1]);
