@@ -14,12 +14,12 @@ import org.slf4j.Logger;
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(Flerovium.MODID)
 public class Flerovium {
-
     // Define mod id in a common place for everything to reference
     public static final String MODID = "flerovium";
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
     // Create a Deferred Register to hold Blocks which will all be registered under the "flerovium" namespace
+    public static final Config config = ConfigParser.getConfig();
 
     public Flerovium() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();

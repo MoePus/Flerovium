@@ -1,5 +1,6 @@
 package com.moepus.flerovium.functions;
 
+import com.moepus.flerovium.Flerovium;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import me.jellysquid.mods.sodium.client.render.immediate.model.ModelCuboid;
@@ -286,6 +287,9 @@ public class FastEntityRenderer {
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_POS_X], cuboid.u2, cuboid.v1, cuboid.u4, cuboid.v2);
 
         FACE = ~0;
+        if (!Flerovium.config.entityBackFaceCulling)
+            return;
+
         if (matrices.pose().m32() <= -16.0F && RenderSystem.modelViewMatrix.m32() == 0 && ly != 0) {
             Matrix3f normal = matrices.normal();
 
@@ -293,13 +297,13 @@ public class FastEntityRenderer {
             float posY = p1y + p8y;
             float posZ = p1z + p8z;
             if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 < 0)
-                FACE &= ~(1 << (lx > 0 ? FACE_NEG_X: FACE_POS_X));
+                FACE &= ~(1 << (lx > 0 ? FACE_NEG_X : FACE_POS_X));
 
             posX = p2x + p7x;
             posY = p2y + p7y;
             posZ = p2z + p7z;
             if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 > 0)
-                FACE &= ~(1 << (lx < 0 ? FACE_NEG_X: FACE_POS_X));
+                FACE &= ~(1 << (lx < 0 ? FACE_NEG_X : FACE_POS_X));
 
             posX = p1x + p3x;
             posY = p1y + p3y;
