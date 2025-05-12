@@ -75,7 +75,7 @@ public abstract class ItemRendererMixin {
         // In World
         int faces = 0b111111;
         if (transforms.gui == ItemTransform.NO_TRANSFORM && pose.pose().m32() < -10.0F) { // Item Far away
-            faces &= ~((1 << Direction.NORTH.ordinal()) | (1 << Direction.SOUTH.ordinal()));
+            faces &= ((1 << Direction.NORTH.ordinal()) | (1 << Direction.SOUTH.ordinal()));
         }
         if (pose.pose().m32() < -3.0F && RenderSystem.modelViewMatrix.m32() == 0) {
             faces |= extraCull;
