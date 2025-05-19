@@ -58,7 +58,10 @@ public abstract class ItemRendererMixin {
     @Unique
     private int flerovium$decideCull(ItemTransforms transforms, ItemDisplayContext itemDisplayContext, PoseStack.Pose pose) {
         final int extraCull = 0b1000000;
-        if (itemDisplayContext == ItemDisplayContext.GUI) { // In GUI
+        if (RenderSystem.modelViewMatrix.m32() != 0) { // In GUI
+            if (itemDisplayContext != ItemDisplayContext.GUI) {
+                return 0b111111;
+            }
             if (transforms.gui == ItemTransform.NO_TRANSFORM) { // Item
                 if (pose.pose().m20() == 0 && pose.pose().m21() == 0) { // Not per-transformed
                     return 1 << Direction.SOUTH.ordinal();
@@ -77,7 +80,7 @@ public abstract class ItemRendererMixin {
         if (transforms.gui == ItemTransform.NO_TRANSFORM && pose.pose().m32() < -10.0F) { // Item Far away
             faces &= ((1 << Direction.NORTH.ordinal()) | (1 << Direction.SOUTH.ordinal()));
         }
-        if (pose.pose().m32() < -3.0F && RenderSystem.modelViewMatrix.m32() == 0) {
+        if (pose.pose().m32() < -3.0F) {
             faces |= extraCull;
         }
         return faces;
