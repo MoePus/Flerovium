@@ -42,6 +42,10 @@ repositories {
         name = 'Sponge / Mixin'
         url = 'https://repo.spongepowered.org/repository/maven-public/'
     }
+    maven {
+        url "https://cursemaven.com"
+    }
+    maven { url = "https://maven.blamejared.com" } // JEI, Vazkii's Mods
 }
 base {
     archivesName = mod_id + "-neoforge-" + minecraft_version
@@ -127,6 +131,7 @@ dependencies {
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-renderer-api-v1:3.4.0+acb05a3919")
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-rendering-data-attachment-v1:0.3.48+73761d2e19")
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-block-view-api-v2:1.0.10+9afaaf8c19")
+    //implementation "curse.maven:some-assembly-required-422951:6520221"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
