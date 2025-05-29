@@ -58,6 +58,15 @@ public class FastSimpleBakedModelRenderer {
         return BUFFED_VERTEX >= BUFFER_VERTEX_COUNT;
     }
 
+    // Check for functional storage, they are doing rotation by mul the pose only but not normal.
+    // Sign for X axis should be the same.
+    private static boolean checkNormalRotateEqual(PoseStack.Pose pose) {
+        return ((Float.floatToRawIntBits(pose.pose().m00()) ^ Float.floatToRawIntBits(pose.normal().m00())) >> 31) +
+                ((Float.floatToRawIntBits(pose.pose().m10()) ^ Float.floatToRawIntBits(pose.normal().m10())) >> 31) +
+                ((Float.floatToRawIntBits(pose.pose().m20()) ^ Float.floatToRawIntBits(pose.normal().m20())) >> 31)
+                == 0;
+    }
+
     private static void putBulkData(VertexBufferWriter writer, PoseStack.Pose pose, BakedQuad bakedQuad,
                                     int light, int overlay, int color, int faces) {
         int[] vertices = bakedQuad.getVertices();
@@ -84,9 +93,10 @@ public class FastSimpleBakedModelRenderer {
         float pos2_z = MatrixHelper.transformPositionZ(pose_matrix, x, y, z);
 
         if ((faces & 0b1000000) != 0) { // Backface culling
-            if ((pos0_x + pos2_x) * nx + (pos0_y + pos2_y) * ny + (pos0_z + pos2_z) * nz > 0)
-                if(((BakedQuadView)bakedQuad).getNormalFace() != ModelQuadFacing.UNASSIGNED)
-                    return;
+            if (checkNormalRotateEqual(pose))
+                if ((pos0_x + pos2_x) * nx + (pos0_y + pos2_y) * ny + (pos0_z + pos2_z) * nz > 0)
+                    if (((BakedQuadView) bakedQuad).getNormalFace() != ModelQuadFacing.UNASSIGNED)
+                        return;
         }
         int n = packSafe(nx, ny, nz);
 
@@ -104,7 +114,7 @@ public class FastSimpleBakedModelRenderer {
         float pos3_y = MatrixHelper.transformPositionY(pose_matrix, x, y, z);
         float pos3_z = MatrixHelper.transformPositionZ(pose_matrix, x, y, z);
 
-        final int c = color != -1 ? multiplyIntBytes(color, vertices[3]) : vertices[3];
+        final int c = color != -1 ? multiplyIntBytes(color, vertices[3]):vertices[3];
         final int baked = vertices[6];
         final int l = Math.max(((baked & 0xffff) << 16) | (baked >> 16), light);
         ModelVertex.write(BUFFER_PTR, pos0_x, pos0_y, pos0_z, c, Float.intBitsToFloat(vertices[4]),
@@ -135,8 +145,8 @@ public class FastSimpleBakedModelRenderer {
     private static void renderQuadList(PoseStack.Pose pose, VertexBufferWriter writer, int faces, List<BakedQuad> bakedQuads,
                                        int light, int overlay, ItemStack itemStack, ItemColor colorProvider) {
         for (BakedQuad bakedQuad : bakedQuads) {
-            if((faces & (1 << bakedQuad.getDirection().ordinal())) == 0) continue;
-            int color = colorProvider != null && bakedQuad.getTintIndex() != -1 ? GetItemTint(bakedQuad.getTintIndex(), itemStack, colorProvider) : -1;
+            if ((faces & (1 << bakedQuad.getDirection().ordinal())) == 0) continue;
+            int color = colorProvider != null && bakedQuad.getTintIndex() != -1 ? GetItemTint(bakedQuad.getTintIndex(), itemStack, colorProvider):-1;
             putBulkData(writer, pose, bakedQuad, light, overlay, color, faces);
         }
         if (pose.pose().m32() > -8.0F) { // Do animation for item in GUI or nearby in world
@@ -149,7 +159,7 @@ public class FastSimpleBakedModelRenderer {
     public static void render(SimpleBakedModel model, int faces, ItemStack itemStack, int packedLight, int packedOverlay,
                               PoseStack poseStack, VertexBufferWriter writer, ItemColors itemColors) {
         PoseStack.Pose pose = poseStack.last();
-        ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtended) itemColors).sodium$getColorProvider(itemStack) : null;
+        ItemColor colorProvider = !itemStack.isEmpty() ? ((ItemColorsExtended) itemColors).sodium$getColorProvider(itemStack):null;
 
         LAST_TINT_INDEX = LAST_TINT = -1;
         for (Direction direction : Direction.values()) {

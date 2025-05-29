@@ -179,6 +179,8 @@ dependencies {
     // runtimeOnly fg.deobf("curse.maven:clothconfig-348521:5729105")
     // runtimeOnly fg.deobf("curse.maven:create-328085:5838779")
     // runtimeOnly fg.deobf("curse.maven:mek-268560:5919382")
+    // runtimeOnly fg.deobf("curse.maven:functional-storage-556861:5650296")
+    // runtimeOnly fg.deobf("curse.maven:titanium-287342:5468426")
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
