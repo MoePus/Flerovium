@@ -1,5 +1,6 @@
 package com.moepus.flerovium.mixins.Item;
 
+import com.moepus.flerovium.Flerovium;
 import com.moepus.flerovium.functions.DummyModel;
 import com.moepus.flerovium.functions.FastSimpleBakedModelRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -80,7 +81,7 @@ public abstract class ItemRendererMixin {
         if (transforms.gui == ItemTransform.NO_TRANSFORM && pose.pose().m32() < -10.0F) { // Item Far away
             faces &= ((1 << Direction.NORTH.ordinal()) | (1 << Direction.SOUTH.ordinal()));
         }
-        if (pose.pose().m32() < -3.0F) {
+        if (Flerovium.config.itemBackFaceCulling && pose.pose().m32() < -3.0F) {
             faces |= extraCull;
         }
         return faces;
