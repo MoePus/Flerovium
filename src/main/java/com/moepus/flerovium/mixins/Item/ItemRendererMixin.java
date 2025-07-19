@@ -68,7 +68,7 @@ public abstract class ItemRendererMixin {
     private int flerovium$decideCull(ItemTransforms transforms, ItemDisplayContext itemDisplayContext, PoseStack.Pose pose) {
         final int extraCull = 0b1000000;
 
-        if (RenderSystem.modelViewMatrix.m32() != 0) { // In GUI
+        if (RenderSystem.modelViewMatrix.m32() != 0 || itemDisplayContext == ItemDisplayContext.GUI) { // In GUI
             if (itemDisplayContext != ItemDisplayContext.GUI)
                 return 0b111111;
             if (transforms.gui == ItemTransform.NO_TRANSFORM) { // Item
