@@ -36,7 +36,7 @@ public class MixinPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         return switch (mixinClassName) {
-            case "com.moepus.flerovium.mixins.Entity.EntityRendererMixin" ->
+            case "com.moepus.flerovium.mixins.Entity.EntityRendererMixin" -> Flerovium.config.entityBackFaceCulling &&
                     isVersionAllowed(LoadingModList.get().getModFileById("sodium"), "[0.7.0,)");
             default -> true;
         };
