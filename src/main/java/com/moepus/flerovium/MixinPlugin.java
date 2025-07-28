@@ -33,11 +33,18 @@ public class MixinPlugin implements IMixinConfigPlugin {
         return verrange.containsVersion(mod.getMods().get(0).getVersion());
     }
 
+    private boolean doModExist(String modId) {
+        return LoadingModList.get().getModFileById(modId) != null;
+    }
+
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         return switch (mixinClassName) {
             case "com.moepus.flerovium.mixins.Entity.EntityRendererMixin" -> Flerovium.config.entityBackFaceCulling &&
                     isVersionAllowed(LoadingModList.get().getModFileById("sodium"), "[0.7.0,)");
+            case "com.moepus.flerovium.mixins.Particle.ReduceTerrainParticlesMixin" -> Flerovium.config.reduceTerrainParticles;
+            case "com.moepus.flerovium.mixins.Particle.ParticleEngineMixin",
+                 "com.moepus.flerovium.mixins.Particle.SingleQuadParticleMixin" -> !doModExist("asyncparticles");
             default -> true;
         };
     }

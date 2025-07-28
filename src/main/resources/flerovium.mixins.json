@@ -15,6 +15,7 @@
     "Item.ItemTransformMixin",
     "Item.SimpleBakedModelMixin",
     "Particle.ParticleEngineMixin",
+    "Particle.ReduceTerrainParticlesMixin",
     "Particle.SingleQuadParticleMixin"
   ],
   "injectors": {
