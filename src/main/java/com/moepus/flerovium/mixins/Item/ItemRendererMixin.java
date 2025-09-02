@@ -1,9 +1,13 @@
 package com.moepus.flerovium.mixins.Item;
 
 import com.moepus.flerovium.Flerovium;
+import com.moepus.flerovium.Iris.IrisCompat;
+import com.moepus.flerovium.Iris.IrisEntityVertex;
+import com.moepus.flerovium.Iris.IrisSimpleBakedItemRenderer;
 import com.moepus.flerovium.functions.DummyModel;
 import com.moepus.flerovium.functions.FastSimpleBakedModelRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
@@ -43,6 +47,8 @@ public abstract class ItemRendererMixin {
 
     @ModifyArg(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;renderModelLists(Lnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/world/item/ItemStack;IILcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V"))
     public BakedModel onRrenderModelLists(BakedModel model, ItemStack stack, int light, int overlay, PoseStack poseStack, VertexConsumer vertexConsumer, @Local(ordinal = 0) BakedModel originalModel, @Local ItemDisplayContext itemDisplayContext) {
+        if (!(vertexConsumer instanceof BufferBuilder bb)) return model;
+
         BakedModel renderModel = model;
         BakedModel parentModel = originalModel;
         if (model instanceof ForwardingBakedModel fowardingBakedModel && originalModel instanceof ForwardingBakedModel fowardingOriginalModel) {
@@ -60,7 +66,11 @@ public abstract class ItemRendererMixin {
         if (writer == null) return model;
 
         int faces = flerovium$decideCull(((SimpleBakedModel) originalModel).getTransforms(), itemDisplayContext, poseStack.last());
-        FastSimpleBakedModelRenderer.render((SimpleBakedModel) renderModel, faces, stack, light, overlay, poseStack, writer, itemColors);
+        if (bb.format == IrisEntityVertex.FORMAT) {
+            IrisSimpleBakedItemRenderer.render((SimpleBakedModel) renderModel, faces, stack, light, overlay, poseStack, writer, itemColors);
+        } else {
+            FastSimpleBakedModelRenderer.render((SimpleBakedModel) renderModel, faces, stack, light, overlay, poseStack, writer, itemColors);
+        }
 
         return flerovium$dummy;
     }

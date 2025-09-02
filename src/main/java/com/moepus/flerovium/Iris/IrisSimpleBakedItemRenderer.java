@@ -1,4 +1,4 @@
-package com.moepus.flerovium.functions;
+package com.moepus.flerovium.Iris;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
@@ -16,34 +16,24 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Math;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import java.util.List;
 
-import static com.moepus.flerovium.functions.MathUtil.*;
+import static com.moepus.flerovium.functions.FastSimpleBakedModelRenderer.*;
+import static com.moepus.flerovium.functions.MathUtil.packSafe;
 
-public class FastSimpleBakedModelRenderer {
+public class IrisSimpleBakedItemRenderer {
     private static final MemoryStack STACK = MemoryStack.create();
-    public static final int VERTEX_COUNT = 4;
-    public static final int BUFFER_VERTEX_COUNT = 48;
-    public static final int STRIDE = 8;
-    private static final long SCRATCH_BUFFER = MemoryUtil.nmemAlignedAlloc(64, BUFFER_VERTEX_COUNT * EntityVertex.STRIDE);
+    private static final long SCRATCH_BUFFER = MemoryUtil.nmemAlignedAlloc(64, BUFFER_VERTEX_COUNT * IrisEntityVertex.STRIDE);
     private static long BUFFER_PTR = SCRATCH_BUFFER;
     private static int BUFFED_VERTEX = 0;
-
-    private static void flush(VertexBufferWriter writer) {
-        if (BUFFED_VERTEX == 0) return;
-        STACK.push();
-        writer.push(STACK, SCRATCH_BUFFER, BUFFED_VERTEX, EntityVertex.FORMAT);
-        STACK.pop();
-        BUFFER_PTR = SCRATCH_BUFFER;
-        BUFFED_VERTEX = 0;
-    }
-
-    private static boolean isBufferMax() {
-        return BUFFED_VERTEX >= BUFFER_VERTEX_COUNT;
-    }
+    private static final Vector2f uv0 = new Vector2f();
+    private static final Vector2f uv1 = new Vector2f();
+    private static final Vector2f uv2 = new Vector2f();
+    private static final Vector2f uv3 = new Vector2f();
 
     private static void putBulkData(VertexBufferWriter writer, PoseStack.Pose pose, BakedQuad bakedQuad, int light,
                                     int overlay, int color, int faces) {
@@ -91,21 +81,42 @@ public class FastSimpleBakedModelRenderer {
         float pos3_z = MatrixHelper.transformPositionZ(pose_matrix, x, y, z);
 
         final int c = color != -1 ? ColorMixer.mulComponentWise(color, vertices[3]) : vertices[3];
+
+        uv0.set(Float.intBitsToFloat(vertices[4]), Float.intBitsToFloat(vertices[5]));
+        uv1.set(Float.intBitsToFloat(vertices[STRIDE + 4]), Float.intBitsToFloat(vertices[STRIDE + 5]));
+        uv2.set(Float.intBitsToFloat(vertices[STRIDE * 2 + 4]), Float.intBitsToFloat(vertices[STRIDE * 2 + 5]));
+        uv3.set(Float.intBitsToFloat(vertices[STRIDE * 3 + 4]), Float.intBitsToFloat(vertices[STRIDE * 3 + 5]));
+        float mid_u = (uv0.x + uv1.x + uv2.x + uv3.x) / 4;
+        float mid_v = (uv0.y + uv1.y + uv2.y + uv3.y) / 4;
+
         final int baked = vertices[6];
         final int l = Math.max(((baked & 0xffff) << 16) | (baked >> 16), light);
         long WRITE_PTR = BUFFER_PTR;
-        EntityVertex.write(WRITE_PTR, pos0_x, pos0_y, pos0_z, c, vertices[4], vertices[5], overlay, l, n);
-        WRITE_PTR += EntityVertex.STRIDE;
-        EntityVertex.write(WRITE_PTR, pos1_x, pos1_y, pos1_z, c, vertices[STRIDE + 4], vertices[STRIDE + 5], overlay, l, n);
-        WRITE_PTR += EntityVertex.STRIDE;
-        EntityVertex.write(WRITE_PTR, pos2_x, pos2_y, pos2_z, c, vertices[STRIDE * 2 + 4], vertices[STRIDE * 2 + 5], overlay, l, n);
-        WRITE_PTR += EntityVertex.STRIDE;
-        EntityVertex.write(WRITE_PTR, pos3_x, pos3_y, pos3_z, c, vertices[STRIDE * 3 + 4], vertices[STRIDE * 3 + 5], overlay, l, n);
-        WRITE_PTR += EntityVertex.STRIDE;
+        IrisEntityVertex.write(WRITE_PTR, pos0_x, pos0_y, pos0_z, c, uv0.x, uv0.y, mid_u, mid_v, overlay, l, n, -1);
+        WRITE_PTR += IrisEntityVertex.STRIDE;
+        IrisEntityVertex.write(WRITE_PTR, pos1_x, pos1_y, pos1_z, c, uv1.x, uv1.y, mid_u, mid_v, overlay, l, n, -1);
+        WRITE_PTR += IrisEntityVertex.STRIDE;
+        IrisEntityVertex.write(WRITE_PTR, pos2_x, pos2_y, pos2_z, c, uv2.x, uv2.y, mid_u, mid_v, overlay, l, n, -1);
+        WRITE_PTR += IrisEntityVertex.STRIDE;
+        IrisEntityVertex.write(WRITE_PTR, pos3_x, pos3_y, pos3_z, c, uv3.x, uv3.y, mid_u, mid_v, overlay, l, n, -1);
+        WRITE_PTR += IrisEntityVertex.STRIDE;
 
         BUFFER_PTR = WRITE_PTR;
         BUFFED_VERTEX += VERTEX_COUNT;
         if (isBufferMax()) flush(writer);
+    }
+
+    private static void flush(VertexBufferWriter writer) {
+        if (BUFFED_VERTEX == 0) return;
+        STACK.push();
+        writer.push(STACK, SCRATCH_BUFFER, BUFFED_VERTEX, IrisEntityVertex.FORMAT);
+        STACK.pop();
+        BUFFER_PTR = SCRATCH_BUFFER;
+        BUFFED_VERTEX = 0;
+    }
+
+    private static boolean isBufferMax() {
+        return BUFFED_VERTEX >= BUFFER_VERTEX_COUNT;
     }
 
     private static void renderQuadList(PoseStack.Pose pose, VertexBufferWriter writer, int faces, List<BakedQuad> bakedQuads,

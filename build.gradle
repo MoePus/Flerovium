@@ -46,6 +46,10 @@ repositories {
         url "https://cursemaven.com"
     }
     maven { url = "https://maven.blamejared.com" } // JEI, Vazkii's Mods
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
 }
 base {
     archivesName = mod_id + "-neoforge-" + minecraft_version
@@ -131,6 +135,8 @@ dependencies {
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-renderer-api-v1:3.4.0+acb05a3919")
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-rendering-data-attachment-v1:0.3.48+73761d2e19")
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-block-view-api-v2:1.0.10+9afaaf8c19")
+
+    implementation ("maven.modrinth:iris:1.8.8+${minecraft_version}-neoforge")
     //implementation "curse.maven:some-assembly-required-422951:6520221"
 }
 
