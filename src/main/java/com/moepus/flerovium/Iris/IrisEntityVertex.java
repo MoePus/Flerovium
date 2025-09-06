@@ -10,12 +10,19 @@ import net.caffeinemc.mods.sodium.api.vertex.attributes.common.PositionAttribute
 import net.caffeinemc.mods.sodium.api.vertex.attributes.common.TextureAttribute;
 
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
+import net.irisshaders.iris.vertices.IrisVertexFormats;
 
 import org.lwjgl.system.MemoryUtil;
 
 public class IrisEntityVertex {
 	public static final VertexFormat FORMAT;
-	public static final int STRIDE = 54;
+	public static final int STRIDE;
+	public static final long ENTITY_ID_OFFSET;
+	public static final long BLOCK_ENTITY_ID_OFFSET;
+	public static final long ITEM_ID_OFFSET;
+	public static final long MID_U_OFFSET;
+	public static final long MID_V_OFFSET;
+	public static final long TANGENT_OFFSET;
 
 	public IrisEntityVertex() {
 	}
@@ -27,15 +34,32 @@ public class IrisEntityVertex {
 		OverlayAttribute.set(ptr + 24L, overlay);
 		LightAttribute.set(ptr + 28L, light);
 		NormalAttribute.set(ptr + 32L, normal);
-		MemoryUtil.memPutShort(ptr + 36L, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedEntity());
-		MemoryUtil.memPutShort(ptr + 38L, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedBlockEntity());
-		MemoryUtil.memPutShort(ptr + 40L, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedItem());
-		MemoryUtil.memPutFloat(ptr + 42L, mid_u);
-		MemoryUtil.memPutFloat(ptr + 46L, mid_v);
+		MemoryUtil.memPutShort(ptr + ENTITY_ID_OFFSET, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedEntity());
+		MemoryUtil.memPutShort(ptr + BLOCK_ENTITY_ID_OFFSET, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedBlockEntity());
+		MemoryUtil.memPutShort(ptr + ITEM_ID_OFFSET, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedItem());
+		MemoryUtil.memPutFloat(ptr + MID_U_OFFSET, mid_u);
+		MemoryUtil.memPutFloat(ptr + MID_V_OFFSET, mid_v);
 		MemoryUtil.memPutInt(ptr + 50L, tangent);
 	}
 
 	static {
 		FORMAT = IrisCompat.IS_IRIS_INSTALLED ? IrisCompat.GetEntityVertexFormat() : null;
+		if(FORMAT != null) {
+			STRIDE = FORMAT.getVertexSize();
+			ENTITY_ID_OFFSET = FORMAT.getOffset(IrisVertexFormats.ENTITY_ID_ELEMENT);
+			BLOCK_ENTITY_ID_OFFSET = ENTITY_ID_OFFSET + 2;
+			ITEM_ID_OFFSET = BLOCK_ENTITY_ID_OFFSET + 2;
+			MID_U_OFFSET = FORMAT.getOffset(IrisVertexFormats.MID_TEXTURE_ELEMENT);
+			MID_V_OFFSET = MID_U_OFFSET + 4;
+			TANGENT_OFFSET = FORMAT.getOffset(IrisVertexFormats.TANGENT_ELEMENT);
+		}else {
+			STRIDE = 54;
+			ENTITY_ID_OFFSET = 36;
+			BLOCK_ENTITY_ID_OFFSET = 38;
+			ITEM_ID_OFFSET = 40;
+			MID_U_OFFSET = 42;
+			MID_V_OFFSET = 46;
+			TANGENT_OFFSET = 50;
+		}
 	}
 }
