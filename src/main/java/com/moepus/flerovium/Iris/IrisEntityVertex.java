@@ -39,7 +39,7 @@ public class IrisEntityVertex {
 		MemoryUtil.memPutShort(ptr + ITEM_ID_OFFSET, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedItem());
 		MemoryUtil.memPutFloat(ptr + MID_U_OFFSET, mid_u);
 		MemoryUtil.memPutFloat(ptr + MID_V_OFFSET, mid_v);
-		MemoryUtil.memPutInt(ptr + 50L, tangent);
+		MemoryUtil.memPutInt(ptr + TANGENT_OFFSET, tangent);
 	}
 
 	static {
