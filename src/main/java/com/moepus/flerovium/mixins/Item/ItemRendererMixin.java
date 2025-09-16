@@ -1,7 +1,6 @@
 package com.moepus.flerovium.mixins.Item;
 
 import com.moepus.flerovium.Flerovium;
-import com.moepus.flerovium.Iris.IrisCompat;
 import com.moepus.flerovium.Iris.IrisEntityVertex;
 import com.moepus.flerovium.Iris.IrisSimpleBakedItemRenderer;
 import com.moepus.flerovium.functions.DummyModel;

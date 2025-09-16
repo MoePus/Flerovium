@@ -1,32 +1,79 @@
 package com.moepus.flerovium.mixins.Entity;
 
+import com.moepus.flerovium.Iris.IrisEntityRenderer;
+import com.moepus.flerovium.Iris.IrisEntityVertex;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
+import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
+import net.caffeinemc.mods.sodium.api.vertex.format.common.EntityVertex;
 import net.caffeinemc.mods.sodium.client.render.immediate.model.EntityRenderer;
 import net.caffeinemc.mods.sodium.client.render.immediate.model.ModelCuboid;
+import net.caffeinemc.mods.sodium.client.util.Int2;
 import org.joml.Matrix3f;
+import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static net.caffeinemc.mods.sodium.client.render.immediate.model.ModelCuboid.*;
 
-@Mixin(value = EntityRenderer.class, remap = false)
+@Mixin(value = EntityRenderer.class, remap = false, priority = 2005)
 public abstract class EntityRendererMixin {
     @Shadow
     private static void setVertex(int vertexIndex, float x, float y, float z, int color) {
     }
 
-    @Unique
-    private static int flerovium$FACE = ~0;
+    @Shadow
+    private static long writeVertex(long ptr, int vertexIndex, long packedUv, long packedOverlayLight, int packedNormal) {
+        return 0;
+    }
 
-    /**
-     * @author MoePus
-     * @reason BackFace Culling
-     */
-    @Overwrite
-    private static void prepareVertices(PoseStack.Pose matrices, ModelCuboid cuboid, int color) {
+    @Shadow
+    private static void prepareNormalsIfChanged(PoseStack.Pose matrices) {
+    }
+
+    @Shadow
+    @Final
+    private static int[] CUBE_FACE_NORMAL;
+
+    @Shadow
+    @Final
+    private static long[] CUBE_VERTEX_XY;
+
+    @Shadow
+    @Final
+    private static long[] CUBE_VERTEX_ZW;
+
+    @Inject(method = "renderCuboid", at = @At("HEAD"), cancellable = true)
+    private static void onRenderCuboid(PoseStack.Pose matrices, VertexBufferWriter writer, ModelCuboid cuboid, int light, int overlay, int color, CallbackInfo ci) {
+        ci.cancel();
+
+        boolean isRenderingIrisEntity = writer instanceof BufferBuilder bb && bb.format == IrisEntityVertex.FORMAT;
+        int cullingMask = flerovium$prepareVertices(matrices, cuboid, color);
+        prepareNormalsIfChanged(matrices);
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            long packedOverlayLight = Int2.pack(overlay, light);
+            if (isRenderingIrisEntity) {
+                long vertexBuffer = stack.nmalloc(64, IrisEntityVertex.STRIDE * 24);
+                int vertexCount = IrisEntityRenderer.emitQuads(vertexBuffer, cuboid, packedOverlayLight, cullingMask, CUBE_VERTEX_XY, CUBE_VERTEX_ZW, CUBE_FACE_NORMAL);
+                if (vertexCount > 0) {
+                    writer.push(stack, vertexBuffer, vertexCount, IrisEntityVertex.FORMAT);
+                }
+            } else {
+                long vertexBuffer = stack.nmalloc(64, 864);
+                int vertexCount = flerovium$emitQuads(vertexBuffer, cuboid, packedOverlayLight, cullingMask);
+                if (vertexCount > 0) {
+                    writer.push(stack, vertexBuffer, vertexCount, EntityVertex.FORMAT);
+                }
+            }
+        }
+    }
+
+    @Unique
+    private static int flerovium$prepareVertices(PoseStack.Pose matrices, ModelCuboid cuboid, int color) {
         var pose = matrices.pose();
 
         float vxx = (pose.m00() * cuboid.sizeX), vxy = (pose.m01() * cuboid.sizeX), vxz = (pose.m02() * cuboid.sizeX);
@@ -79,44 +126,67 @@ public abstract class EntityRendererMixin {
         float c011z = c010z + vzz;
         setVertex(VERTEX_X0_Y1_Z1, c011x, c011y, c011z, color);
 
-        flerovium$FACE = ~0;
+        int cullingMask = ((ModelCuboidAccessor) cuboid).getCullMask();
         if (matrices.pose().m32() <= -16.0F && RenderSystem.getModelViewMatrix().m32() == 0) {
             Matrix3f normal = matrices.normal();
 
             float posX = c000x + c011x;
             float posY = c000y + c011y;
             float posZ = c000z + c011z;
-            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 < 0) flerovium$FACE &= ~(1 << (cuboid.sizeX > 0 ? FACE_POS_X : FACE_NEG_X));
+            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 < 0)
+                cullingMask &= ~(1 << (cuboid.sizeX > 0 ? FACE_POS_X : FACE_NEG_X));
 
             posX = c100x + c111x;
             posY = c100y + c111y;
             posZ = c100z + c111z;
-            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 > 0) flerovium$FACE &= ~(1 << (cuboid.sizeX > 0 ? FACE_NEG_X : FACE_POS_X));
+            if (posX * normal.m00 + posY * normal.m01 + posZ * normal.m02 > 0)
+                cullingMask &= ~(1 << (cuboid.sizeX > 0 ? FACE_NEG_X : FACE_POS_X));
 
             posX = c000x + c110x;
             posY = c000y + c110y;
             posZ = c000z + c110z;
-            if (posX * normal.m20 + posY * normal.m21 + posZ * normal.m22 < 0) flerovium$FACE &= ~(1 << FACE_NEG_Z);
+            if (posX * normal.m20 + posY * normal.m21 + posZ * normal.m22 < 0) cullingMask &= ~(1 << FACE_NEG_Z);
 
             posX = c001x + c111x;
             posY = c001y + c111y;
             posZ = c001z + c111z;
-            if (posX * normal.m20 + posY * normal.m21 + posZ * normal.m22 > 0) flerovium$FACE &= ~(1 << FACE_POS_Z);
+            if (posX * normal.m20 + posY * normal.m21 + posZ * normal.m22 > 0) cullingMask &= ~(1 << FACE_POS_Z);
 
             posX = c000x + c101x;
             posY = c000y + c101y;
             posZ = c000z + c101z;
-            if (posX * normal.m10 + posY * normal.m11 + posZ * normal.m12 < 0) flerovium$FACE &= ~(1 << FACE_NEG_Y);
+            if (posX * normal.m10 + posY * normal.m11 + posZ * normal.m12 < 0) cullingMask &= ~(1 << FACE_NEG_Y);
 
             posX = c010x + c111x;
             posY = c010y + c111y;
             posZ = c010z + c111z;
-            if (posX * normal.m10 + posY * normal.m11 + posZ * normal.m12 > 0) flerovium$FACE &= ~(1 << FACE_POS_Y);
+            if (posX * normal.m10 + posY * normal.m11 + posZ * normal.m12 > 0) cullingMask &= ~(1 << FACE_POS_Y);
         }
+        return cullingMask;
     }
 
-    @Redirect(method = "emitQuads", at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/immediate/model/ModelCuboid;shouldDrawFace(I)Z"))
-    private static boolean onShouldDrawFace(ModelCuboid cuboid, int face) {
-        return (flerovium$FACE & (1 << face)) != 0 && cuboid.shouldDrawFace(face);
+
+    @Unique
+    private static int flerovium$emitQuads(long buffer, ModelCuboid cuboid, long packedOverlayLight, int cullMask) {
+        long ptr = buffer;
+        int[] normals = cuboid.normals;
+        int[] positions = cuboid.positions;
+        long[] textures = cuboid.textures;
+        int vertexCount = 0;
+
+        for (int faceIndex = 0; faceIndex < 6; ++faceIndex) {
+            if ((cullMask & (1 << faceIndex)) == 0) {
+                continue;
+            }
+            int elementOffset = faceIndex * 4;
+            int packedNormal = CUBE_FACE_NORMAL[normals[faceIndex]];
+            ptr = writeVertex(ptr, positions[elementOffset + 0], textures[elementOffset + 0], packedOverlayLight, packedNormal);
+            ptr = writeVertex(ptr, positions[elementOffset + 1], textures[elementOffset + 1], packedOverlayLight, packedNormal);
+            ptr = writeVertex(ptr, positions[elementOffset + 2], textures[elementOffset + 2], packedOverlayLight, packedNormal);
+            ptr = writeVertex(ptr, positions[elementOffset + 3], textures[elementOffset + 3], packedOverlayLight, packedNormal);
+            vertexCount += 4;
+        }
+
+        return vertexCount;
     }
 }

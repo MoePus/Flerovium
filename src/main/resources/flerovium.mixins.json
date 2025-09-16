@@ -6,7 +6,8 @@
   "refmap": "flerovium.refmap.json",
   "plugin": "com.moepus.flerovium.MixinPlugin",
   "mixins": [
-    "Entity.EntityRendererMixin"
+    "Entity.EntityRendererMixin",
+    "Entity.ModelCuboidAccessor"
   ],
   "client": [
     "Entity.ClientLevelMixin",
