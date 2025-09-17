@@ -1,5 +1,6 @@
 package com.moepus.flerovium.mixins.Entity;
 
+import com.moepus.flerovium.Flerovium;
 import com.moepus.flerovium.Iris.IrisEntityRenderer;
 import com.moepus.flerovium.Iris.IrisEntityVertex;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -127,7 +128,7 @@ public abstract class EntityRendererMixin {
         setVertex(VERTEX_X0_Y1_Z1, c011x, c011y, c011z, color);
 
         int cullingMask = ((ModelCuboidAccessor) cuboid).getCullMask();
-        if (matrices.pose().m32() <= -16.0F && RenderSystem.getModelViewMatrix().m32() == 0) {
+        if (matrices.pose().m32() <= -16.0F && Flerovium.config.entityBackFaceCulling && RenderSystem.getModelViewMatrix().m32() == 0) {
             Matrix3f normal = matrices.normal();
 
             float posX = c000x + c011x;
