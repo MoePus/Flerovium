@@ -58,15 +58,6 @@ public class FastSimpleBakedModelRenderer {
         return BUFFED_VERTEX >= BUFFER_VERTEX_COUNT;
     }
 
-    // Check for functional storage, they are doing rotation by mul the pose only but not normal.
-    // Sign for X axis should be the same.
-    private static boolean checkNormalRotateEqual(PoseStack.Pose pose) {
-        return ((Float.floatToRawIntBits(pose.pose().m00()) ^ Float.floatToRawIntBits(pose.normal().m00())) >> 31) +
-                ((Float.floatToRawIntBits(pose.pose().m10()) ^ Float.floatToRawIntBits(pose.normal().m10())) >> 31) +
-                ((Float.floatToRawIntBits(pose.pose().m20()) ^ Float.floatToRawIntBits(pose.normal().m20())) >> 31)
-                == 0;
-    }
-
     private static void putBulkData(VertexBufferWriter writer, PoseStack.Pose pose, BakedQuad bakedQuad,
                                     int light, int overlay, int color, int faces) {
         int[] vertices = bakedQuad.getVertices();
@@ -93,10 +84,9 @@ public class FastSimpleBakedModelRenderer {
         float pos2_z = MatrixHelper.transformPositionZ(pose_matrix, x, y, z);
 
         if ((faces & 0b1000000) != 0) { // Backface culling
-            if (checkNormalRotateEqual(pose))
-                if ((pos0_x + pos2_x) * nx + (pos0_y + pos2_y) * ny + (pos0_z + pos2_z) * nz > 0)
-                    if (((BakedQuadView) bakedQuad).getNormalFace() != ModelQuadFacing.UNASSIGNED)
-                        return;
+            if ((pos0_x + pos2_x) * nx + (pos0_y + pos2_y) * ny + (pos0_z + pos2_z) * nz > 0)
+                if (((BakedQuadView) bakedQuad).getNormalFace() != ModelQuadFacing.UNASSIGNED)
+                    return;
         }
         int n = packSafe(nx, ny, nz);
 
