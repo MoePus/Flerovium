@@ -75,6 +75,14 @@ public abstract class ItemRendererMixin {
     }
 
     @Unique
+    private static boolean flerovium$checkNormalRotateEqual(PoseStack.Pose pose) {
+        return ((Float.floatToRawIntBits(pose.pose().m00()) ^ Float.floatToRawIntBits(pose.normal().m00())) >> 31) +
+                ((Float.floatToRawIntBits(pose.pose().m10()) ^ Float.floatToRawIntBits(pose.normal().m10())) >> 31) +
+                ((Float.floatToRawIntBits(pose.pose().m20()) ^ Float.floatToRawIntBits(pose.normal().m20())) >> 31)
+                == 0;
+    }
+
+    @Unique
     private int flerovium$decideCull(ItemTransforms transforms, ItemDisplayContext itemDisplayContext, PoseStack.Pose pose) {
         final int extraCull = 0b1000000;
 
@@ -102,7 +110,7 @@ public abstract class ItemRendererMixin {
                 faces &= ((1 << Direction.NORTH.ordinal()) | (1 << Direction.SOUTH.ordinal()));
             }
         }
-        if (Flerovium.config.itemBackFaceCulling && distance > 9.0F) {
+        if (Flerovium.config.itemBackFaceCulling && distance > 9.0F && flerovium$checkNormalRotateEqual(pose)) {
             faces |= extraCull;
         }
         return faces;
