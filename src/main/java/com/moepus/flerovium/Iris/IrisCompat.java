@@ -19,4 +19,14 @@ public final class IrisCompat {
             return null;
         }
     }
+
+    static VertexFormat GetTerrainVertexFormat() {
+        try {
+            Class<?> irisVertexFormats = Class.forName("net.irisshaders.iris.vertices.IrisVertexFormats");
+            Field field = irisVertexFormats.getDeclaredField("TERRAIN");
+            return (VertexFormat) field.get(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }
