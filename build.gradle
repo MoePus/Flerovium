@@ -23,15 +23,6 @@ repositories {
     mavenLocal()
 
     maven {
-        url "https://maven.pkg.github.com/ims212/Forge_Fabric_API"
-        credentials {
-            username = "IMS212"
-            // Read only token
-            password = "ghp_" + "DEuGv0Z56vnSOYKLCXdsS9svK4nb9K39C1Hn"
-        }
-    }
-
-    maven {
         url "https://maven.su5ed.dev/releases"
     }
     maven {
@@ -122,7 +113,8 @@ configurations {
 dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
 
-    implementation "net.caffeinemc:neoforge:0.7.0-snapshot+mc1.21.1-local"
+    implementation "net.caffeinemc:neoforge:0.7.3-snapshot+mc1.21.1-local"
+    implementation "net.irisshaders:neoforge:1.8.8-snapshot+mc1.21.1-local"
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
@@ -136,7 +128,6 @@ dependencies {
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-rendering-data-attachment-v1:0.3.48+73761d2e19")
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-block-view-api-v2:1.0.10+9afaaf8c19")
 
-    implementation ("maven.modrinth:iris:1.8.8+${minecraft_version}-neoforge")
     //implementation "curse.maven:some-assembly-required-422951:6520221"
 }
 
