@@ -3,7 +3,6 @@ package com.moepus.flerovium.mixins.Block;
 import com.moepus.flerovium.functions.BlockBreaking.BlockBreakingDecalGenerator;
 import com.moepus.flerovium.functions.BlockBreaking.BlockBreakingRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -15,9 +14,11 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderBuffers;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.BlockDestructionProgress;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import org.joml.Matrix4f;
@@ -44,6 +45,9 @@ public abstract class CrumblingRendererMixin {
     @Final
     private RenderBuffers renderBuffers;
 
+    @Shadow
+    public abstract Frustum getFrustum();
+
     @Redirect(method = "renderLevel", at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;long2ObjectEntrySet()Lit/unimi/dsi/fastutil/objects/ObjectSet;"))
     private ObjectSet<Long2ObjectMap.Entry<SortedSet<BlockDestructionProgress>>> fasterBlockBreakingRendering(Long2ObjectMap<SortedSet<BlockDestructionProgress>> instance, DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f frustumMatrix, Matrix4f projectionMatrix) {
         Vec3 camPos = camera.getPosition();
@@ -51,19 +55,23 @@ public abstract class CrumblingRendererMixin {
 
         PoseStack poseStack = new PoseStack();
         for (var entry : set) {
+            BlockPos pos = BlockPos.of(entry.getLongKey());
+            var frustum = this.getFrustum();
+
+            float relx = pos.getX() - (float) camPos.x;
+            float rely = pos.getY() - (float) camPos.y;
+            float relz = pos.getZ() - (float) camPos.z;
+
+            if (!frustum.intersection.testSphere(relx, rely, relz, 1.4f)) {
+                continue;
+            }
+
             int k = entry.getValue().last().getProgress();
             VertexConsumer consumer =
                     this.renderBuffers
                             .crumblingBufferSource()
                             .getBuffer(ModelBakery.DESTROY_TYPES.get(k));
-
-            BlockPos pos = BlockPos.of(entry.getLongKey());
-
             poseStack.pushPose();
-            float relx = pos.getX() - (float) camPos.x;
-            float rely = pos.getY() - (float) camPos.y;
-            float relz = pos.getZ() - (float) camPos.z;
-
             poseStack.translate(relx, rely, relz);
 
             VertexConsumer decal = new BlockBreakingDecalGenerator(consumer, relx, rely, relz);
