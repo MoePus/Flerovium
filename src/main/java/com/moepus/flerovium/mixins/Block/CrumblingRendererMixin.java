@@ -62,7 +62,7 @@ public abstract class CrumblingRendererMixin {
             float rely = pos.getY() - (float) camPos.y;
             float relz = pos.getZ() - (float) camPos.z;
 
-            if (!frustum.intersection.testSphere(relx, rely, relz, 1.4f)) {
+            if (!frustum.intersection.testSphere(relx, rely, relz, 0.7f)) {
                 continue;
             }
 
