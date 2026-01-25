@@ -29,6 +29,8 @@ public class MixinPlugin implements IMixinConfigPlugin {
         return switch (mixinClassName) {
             case "com.moepus.flerovium.mixins.Entity.ModelPartMixin" -> !isModLoaded("bendylib") && !isModLoaded("physicsmod");
             case "com.moepus.flerovium.mixins.Chunk.FrustumMixin" -> !isModLoaded("acedium") && !isModLoaded("nvidium");
+            case "com.moepus.flerovium.mixins.Particle.ParticleEngineMixin",
+                 "com.moepus.flerovium.mixins.Particle.ParticleMixin" -> !isModLoaded("particle_core");
             default -> true;
         };
     }
