@@ -9,6 +9,7 @@
     "Chunk.OcclusionCullerMixin"
   ],
   "client": [
+    "Block.CrumblingRendererMixin",
     "Chunk.FrustumMixin",
     "Entity.ClientLevelMixin",
     "Entity.ModelPartMixin",
