@@ -19,7 +19,9 @@
     "Item.SimpleBakedModelMixin",
     "Particle.ParticleEngineMixin",
     "Particle.ParticleMixin",
-    "Particle.SingleQuadParticleMixin"
+    "Particle.SingleQuadParticleMixin",
+    "Sound.ClientLevelMixin",
+    "Sound.SoundEngineMixin"
   ],
   "injectors": {
     "defaultRequire": 1
