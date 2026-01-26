@@ -3,7 +3,6 @@ package com.moepus.flerovium.mixins.Block;
 import com.moepus.flerovium.functions.BlockBreaking.BlockBreakingDecalGenerator;
 import com.moepus.flerovium.functions.BlockBreaking.BlockBreakingRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
