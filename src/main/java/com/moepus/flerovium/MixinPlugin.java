@@ -31,6 +31,8 @@ public class MixinPlugin implements IMixinConfigPlugin {
             case "com.moepus.flerovium.mixins.Chunk.FrustumMixin" -> !isModLoaded("acedium") && !isModLoaded("nvidium");
             case "com.moepus.flerovium.mixins.Particle.ParticleEngineMixin",
                  "com.moepus.flerovium.mixins.Particle.ParticleMixin" -> !isModLoaded("particle_core");
+            case "com.moepus.flerovium.mixins.Sound.ClientLevelMixin",
+                 "com.moepus.flerovium.mixins.Particle.SkipFarTerrainParticle" ->!isModLoaded("valkyrienskies");
             default -> true;
         };
     }
