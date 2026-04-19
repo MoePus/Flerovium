@@ -44,9 +44,12 @@ public class MixinPlugin implements IMixinConfigPlugin {
                  "com.moepus.flerovium.mixins.Entity.ModelCuboidAccessor" ->
                     isVersionAllowed(LoadingModList.get().getModFileById("sodium"), "[0.7.0,)");
             case "com.moepus.flerovium.mixins.Particle.ReduceTerrainParticlesMixin" ->
-                    Flerovium.config.reduceTerrainParticles;
-            case "com.moepus.flerovium.mixins.Particle.ParticleEngineMixin",
-                 "com.moepus.flerovium.mixins.Particle.SingleQuadParticleMixin" -> !doModExist("asyncparticles");
+                    Flerovium.config.reduceTerrainParticles && !doModExist("simulated");
+            case "com.moepus.flerovium.mixins.Particle.ParticleEngineMixin" ->
+                    !doModExist("asyncparticles") && !doModExist("particle_core");
+            case "com.moepus.flerovium.mixins.Particle.SingleQuadParticleMixin" -> !doModExist("asyncparticles");
+            case "com.moepus.flerovium.mixins.Particle.ParticleMixin" -> !doModExist("particle_core");
+            case "com.moepus.flerovium.mixins.Sound.ClientLevelMixin" -> !doModExist("simulated");
             default -> true;
         };
     }

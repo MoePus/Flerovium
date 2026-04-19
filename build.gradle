@@ -113,8 +113,10 @@ configurations {
 dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
 
-    implementation "net.caffeinemc:neoforge:0.7.3-snapshot+mc1.21.1-local"
-    implementation "net.irisshaders:neoforge:1.8.8-snapshot+mc1.21.1-local"
+    compileOnly "net.caffeinemc:neoforge:0.7.3-snapshot+mc1.21.1-local"
+    compileOnly "net.irisshaders:neoforge:1.8.8-snapshot+mc1.21.1-local"
+    runtimeOnly "maven.modrinth:sodium:mc${minecraft_version}-0.6.9-neoforge"
+    runtimeOnly ("maven.modrinth:iris:1.8.8+${minecraft_version}-neoforge")
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
@@ -128,6 +130,9 @@ dependencies {
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-rendering-data-attachment-v1:0.3.48+73761d2e19")
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-block-view-api-v2:1.0.10+9afaaf8c19")
 
+    implementation "curse.maven:create-328085:7408951"
+    implementation ("maven.modrinth:create-aeronautics:FIeWE7UC")
+    implementation "curse.maven:sable-1312371:7948753"
     //implementation "curse.maven:some-assembly-required-422951:6520221"
 }
 

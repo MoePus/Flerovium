@@ -5,6 +5,7 @@ import com.moepus.flerovium.functions.BlockBreaking.BlockBreakingRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
@@ -18,6 +19,7 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.BlockDestructionProgress;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import org.joml.Matrix4f;
@@ -51,6 +53,7 @@ public abstract class CrumblingRendererMixin {
     private ObjectSet<Long2ObjectMap.Entry<SortedSet<BlockDestructionProgress>>> fasterBlockBreakingRendering(Long2ObjectMap<SortedSet<BlockDestructionProgress>> instance, DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f frustumMatrix, Matrix4f projectionMatrix) {
         Vec3 camPos = camera.getPosition();
         var set = instance.long2ObjectEntrySet();
+        var newset = new ObjectOpenHashSet<Long2ObjectMap.Entry<SortedSet<BlockDestructionProgress>>>();
 
         PoseStack poseStack = new PoseStack();
         for (var entry : set) {
@@ -60,6 +63,10 @@ public abstract class CrumblingRendererMixin {
             float relx = pos.getX() - (float) camPos.x;
             float rely = pos.getY() - (float) camPos.y;
             float relz = pos.getZ() - (float) camPos.z;
+            if (Mth.abs(relx) + Mth.abs(relz) > 65536) { // aeronautics
+                newset.add(entry);
+                continue;
+            }
 
             if (!frustum.intersection.testSphere(relx, rely, relz, 0.7f)) {
                 continue;
@@ -89,6 +96,6 @@ public abstract class CrumblingRendererMixin {
 
             poseStack.popPose();
         }
-        return ObjectSet.of();
+        return newset;
     }
 }
