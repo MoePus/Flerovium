@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = ItemRenderer.class, priority = 100, remap = false)
+@Mixin(value = ItemRenderer.class, remap = false)
 public abstract class ItemRendererMixin {
     @Final
     @Shadow

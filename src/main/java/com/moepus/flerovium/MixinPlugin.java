@@ -1,6 +1,5 @@
 package com.moepus.flerovium;
 
-import net.neoforged.fml.VersionChecker;
 import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.fml.loading.moddiscovery.ModFileInfo;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
@@ -22,7 +21,24 @@ public class MixinPlugin implements IMixinConfigPlugin {
         return null;
     }
 
-    private boolean isVersionAllowed(ModFileInfo mod, String targetVersion) {
+    private ModFileInfo getModFile(String modId) {
+        LoadingModList modList = LoadingModList.get();
+        ModFileInfo modFile = modList.getModFileById(modId);
+        if (modFile != null) {
+            return modFile;
+        }
+
+        return modList.getPlugins().stream()
+                .filter(ModFileInfo.class::isInstance)
+                .map(ModFileInfo.class::cast)
+                .filter(file -> file.getMods().stream().anyMatch(mod -> mod.getModId().equals(modId)))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean isVersionAllowed(String modId, String targetVersion) {
+        ModFileInfo mod = getModFile(modId);
+        if (mod == null) return true;
         VersionRange verrange;
         try {
             verrange = VersionRange.createFromVersionSpec(targetVersion);
@@ -30,11 +46,13 @@ public class MixinPlugin implements IMixinConfigPlugin {
             return false;
         }
 
-        return verrange.containsVersion(mod.getMods().get(0).getVersion());
+        return mod.getMods().stream()
+                .filter(modInfo -> modInfo.getModId().equals(modId))
+                .anyMatch(modInfo -> verrange.containsVersion(modInfo.getVersion()));
     }
 
     private boolean doModExist(String modId) {
-        return LoadingModList.get().getModFileById(modId) != null;
+        return getModFile(modId) != null;
     }
 
     @Override
@@ -42,7 +60,7 @@ public class MixinPlugin implements IMixinConfigPlugin {
         return switch (mixinClassName) {
             case "com.moepus.flerovium.mixins.Entity.EntityRendererMixin",
                  "com.moepus.flerovium.mixins.Entity.ModelCuboidAccessor" ->
-                    isVersionAllowed(LoadingModList.get().getModFileById("sodium"), "[0.7.0,)");
+                    isVersionAllowed("sodium", "[0.7.0,)");
             case "com.moepus.flerovium.mixins.Particle.ReduceTerrainParticlesMixin" ->
                     Flerovium.config.reduceTerrainParticles && !doModExist("simulated");
             case "com.moepus.flerovium.mixins.Particle.ParticleEngineMixin" ->

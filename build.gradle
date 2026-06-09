@@ -41,6 +41,9 @@ repositories {
         name = "Modrinth"
         url = "https://api.modrinth.com/maven"
     }
+    maven {
+        url = "https://maven.caffeinemc.net/releases"
+    }
 }
 base {
     archivesName = mod_id + "-neoforge-" + minecraft_version
@@ -110,13 +113,40 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
+def sodiumOuterRuntime = configurations.detachedConfiguration(
+        dependencies.create("net.caffeinemc:sodium-neoforge:${sodium_version}+mc${minecraft_version}")
+)
+sodiumOuterRuntime.transitive = false
+
+def sodiumModRuntime = configurations.detachedConfiguration(
+        dependencies.create("net.caffeinemc:sodium-neoforge-mod:${sodium_version}+mc${minecraft_version}")
+)
+sodiumModRuntime.transitive = false
+
+def sodiumDevRuntimeMod = tasks.register('sodiumDevRuntimeMod', Zip) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from { zipTree(sodiumModRuntime.singleFile) }
+    from({ zipTree(sodiumOuterRuntime.singleFile) }) {
+        exclude 'META-INF/neoforge.mods.toml'
+        exclude 'META-INF/jarjar/**'
+    }
+    archiveBaseName = 'sodium-neoforge-dev-runtime-mod'
+    archiveVersion = "${sodium_version}+mc${minecraft_version}"
+    archiveExtension = 'jar'
+    destinationDirectory = layout.buildDirectory.dir('runtime-libs')
+}
+
 dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
 
-    compileOnly "net.caffeinemc:neoforge:0.7.3-snapshot+mc1.21.1-local"
-    compileOnly "net.irisshaders:neoforge:1.8.8-snapshot+mc1.21.1-local"
-    runtimeOnly "maven.modrinth:sodium:mc${minecraft_version}-0.6.9-neoforge"
-    runtimeOnly ("maven.modrinth:iris:1.8.8+${minecraft_version}-neoforge")
+    compileOnly "net.caffeinemc:sodium-neoforge-api:${sodium_version}+mc${minecraft_version}"
+    compileOnly "net.caffeinemc:sodium-neoforge-mod:${sodium_version}+mc${minecraft_version}"
+    localRuntime "net.caffeinemc:sodium-neoforge-api:${sodium_version}+mc${minecraft_version}"
+    localRuntime files(sodiumDevRuntimeMod.flatMap { it.archiveFile }) {
+        builtBy sodiumDevRuntimeMod
+    }
+    //compileOnly ("maven.modrinth:iris:1.8.13+${minecraft_version}-neoforge")
+    compileOnly files("libs/iris-neoforge-1.8.13-snapshot+mc1.21.1-local.jar")
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
@@ -126,13 +156,13 @@ dependencies {
     }
 
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-api-base:0.4.42+d1308ded19")
-    addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-renderer-api-v1:3.4.0+acb05a3919")
+    addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-renderer-api-v1:3.4.1+9125b6dc19")
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-rendering-data-attachment-v1:0.3.48+73761d2e19")
     addEmbeddedFabricModule("org.sinytra.forgified-fabric-api:fabric-block-view-api-v2:1.0.10+9afaaf8c19")
 
-    implementation "curse.maven:create-328085:7408951"
-    implementation ("maven.modrinth:create-aeronautics:FIeWE7UC")
-    implementation "curse.maven:sable-1312371:7948753"
+    //implementation "curse.maven:create-328085:7408951"
+    //implementation ("maven.modrinth:create-aeronautics:FIeWE7UC")
+    //implementation "curse.maven:sable-1312371:7948753"
     //implementation "curse.maven:some-assembly-required-422951:6520221"
 }
 
