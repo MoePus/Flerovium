@@ -73,6 +73,7 @@ public abstract class CrumblingRendererMixin {
             }
 
             int k = entry.getValue().last().getProgress();
+            if (k < 0 || k >= ModelBakery.DESTROY_TYPES.size()) continue; // sanity check
             VertexConsumer consumer =
                     this.renderBuffers
                             .crumblingBufferSource()
