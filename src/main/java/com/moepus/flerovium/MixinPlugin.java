@@ -27,12 +27,13 @@ public class MixinPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         return switch (mixinClassName) {
-            case "com.moepus.flerovium.mixins.Entity.ModelPartMixin" -> !isModLoaded("bendylib") && !isModLoaded("physicsmod");
+            case "com.moepus.flerovium.mixins.Entity.ModelPartMixin" ->
+                    !isModLoaded("bendylib") && !isModLoaded("physicsmod");
             case "com.moepus.flerovium.mixins.Chunk.FrustumMixin" -> !isModLoaded("acedium") && !isModLoaded("nvidium");
             case "com.moepus.flerovium.mixins.Particle.ParticleEngineMixin",
                  "com.moepus.flerovium.mixins.Particle.ParticleMixin" -> !isModLoaded("particle_core");
-            case "com.moepus.flerovium.mixins.Sound.ClientLevelMixin",
-                 "com.moepus.flerovium.mixins.Particle.SkipFarTerrainParticle" ->!isModLoaded("valkyrienskies");
+            case "com.moepus.flerovium.mixins.Particle.SkipFarTerrainParticle" -> !isModLoaded("valkyrienskies");
+            case "com.moepus.flerovium.mixins.Sound.ClientLevelMixin" -> !ConfigParser.getConfig().disableSoundDistanceCull && !isModLoaded("valkyrienskies");
             default -> true;
         };
     }
