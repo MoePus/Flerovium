@@ -68,6 +68,7 @@ public class MixinPlugin implements IMixinConfigPlugin {
             case "com.moepus.flerovium.mixins.Particle.SingleQuadParticleMixin" -> !doModExist("asyncparticles");
             case "com.moepus.flerovium.mixins.Particle.ParticleMixin" -> !doModExist("particle_core");
             case "com.moepus.flerovium.mixins.Sound.ClientLevelMixin" -> !doModExist("simulated");
+            case "com.moepus.flerovium.mixins.Block.CrumblingRendererMixin" -> Flerovium.config.fastBreakingTexture;
             default -> true;
         };
     }
