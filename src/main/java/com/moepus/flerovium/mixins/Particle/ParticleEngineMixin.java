@@ -19,15 +19,12 @@ public abstract class ParticleEngineMixin {
         float y = (float) (particle.y - instance.camY);
         float z = (float) (particle.z - instance.camZ);
 
-        float width = particle.bbWidth;
-        float height = particle.bbHeight;
-        float diameter = Math.max(width, height);
+        float width = (float) Math.max((aabb.maxX - aabb.minX), (aabb.maxZ - aabb.minZ));
+        float height = (float) (aabb.maxY - aabb.minY);
+        float max = Math.max(width, height);
+        float min = Math.min(width, height);
 
-        return instance.intersection.testSphere(x, y, z, diameter * 0.5f);
-    }
-
-    @Redirect(method = "render(Lnet/minecraft/client/renderer/LightTexture;Lnet/minecraft/client/Camera;FLnet/minecraft/client/renderer/culling/Frustum;Ljava/util/function/Predicate;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/Particle;getRenderBoundingBox(F)Lnet/minecraft/world/phys/AABB;"))
-    AABB skipGeneratingAABB(Particle instance, float partialTicks, @Local Particle particle) {
-        return null;
+        float radius = (max + 0.4142f * min) * 0.5f;
+        return instance.intersection.testSphere(x, y, z, radius);
     }
 }
