@@ -14,6 +14,7 @@
     "Item.ItemRendererMixin",
     "Item.ItemTransformMixin",
     "Item.SimpleBakedModelMixin",
+    "Render.MeshDataMixin",
     "Particle.CampfireSmokeParticleMixin",
     "Particle.ParticleAccessor",
     "Particle.ParticleEngineMixin",
