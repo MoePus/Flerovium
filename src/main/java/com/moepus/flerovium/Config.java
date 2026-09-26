@@ -6,4 +6,5 @@ public class Config {
     public boolean reduceTerrainParticles = true;
     public boolean skipEntityTangentCompute = false;
     public boolean fastBreakingTexture = true;
+    public boolean disableSoundDistanceCull = false;
 }
