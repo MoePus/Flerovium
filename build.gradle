@@ -145,8 +145,7 @@ dependencies {
     localRuntime files(sodiumDevRuntimeMod.flatMap { it.archiveFile }) {
         builtBy sodiumDevRuntimeMod
     }
-    //compileOnly ("maven.modrinth:iris:1.8.13+${minecraft_version}-neoforge")
-    compileOnly files("libs/iris-neoforge-1.8.13-snapshot+mc1.21.1-local.jar")
+    compileOnly ("maven.modrinth:iris:${iris_version}+${minecraft_version}-neoforge")
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
