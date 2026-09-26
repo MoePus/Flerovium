@@ -6,7 +6,11 @@
   "plugin": "com.moepus.flerovium.MixinPlugin",
   "mixins": [
     "Entity.EntityRendererMixin",
-    "Entity.ModelCuboidAccessor"
+    "Entity.ModelCuboidAccessor",
+    "Misc.RegistryDataLoaderRetainedReaderMixin",
+    "Misc.ResourceLocationIrisCompatMixin",
+    "Misc.SimpleJsonResourceReloadListenerRetainedReaderMixin",
+    "Misc.TagLoaderRetainedReaderMixin"
   ],
   "client": [
     "Block.CrumblingRendererMixin",
@@ -14,12 +18,12 @@
     "Item.ItemRendererMixin",
     "Item.ItemTransformMixin",
     "Item.SimpleBakedModelMixin",
-    "Render.MeshDataMixin",
     "Particle.CampfireSmokeParticleMixin",
     "Particle.ParticleAccessor",
     "Particle.ParticleEngineMixin",
     "Particle.ReduceTerrainParticlesMixin",
     "Particle.SingleQuadParticleMixin",
+    "Render.MeshDataMixin",
     "Sound.ClientLevelMixin",
     "Sound.SoundEngineMixin"
   ],

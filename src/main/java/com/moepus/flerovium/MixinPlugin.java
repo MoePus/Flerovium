@@ -57,10 +57,12 @@ public class MixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (targetClassName.startsWith("com.moepus.flerovium.mixins.Misc")) {
+            return Flerovium.config.miscOptimizations;
+        }
         return switch (mixinClassName) {
             case "com.moepus.flerovium.mixins.Entity.EntityRendererMixin",
-                 "com.moepus.flerovium.mixins.Entity.ModelCuboidAccessor" ->
-                    isVersionAllowed("sodium", "[0.7.0,)");
+                 "com.moepus.flerovium.mixins.Entity.ModelCuboidAccessor" -> isVersionAllowed("sodium", "[0.7.0,)");
             case "com.moepus.flerovium.mixins.Particle.ReduceTerrainParticlesMixin" ->
                     Flerovium.config.reduceTerrainParticles && !doModExist("simulated");
             case "com.moepus.flerovium.mixins.Particle.ParticleEngineMixin" ->
