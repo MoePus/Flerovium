@@ -128,15 +128,15 @@ public class BlockBreakingDecalGenerator implements VertexConsumer {
             long ptr = buffer;
 
             for (int i = 0; i < 4; i++) {
-                float x = quad.getX(i);
-                float y = quad.getY(i);
-                float z = quad.getZ(i);
+                float x = quad.sodium$getX(i);
+                float y = quad.sodium$getY(i);
+                float z = quad.sodium$getZ(i);
 
-                int bakedLight = quad.getLight(i);
+                int bakedLight = quad.sodium$getLight(i);
                 int light = lightmap[i];
                 int newLight = Math.max(((bakedLight & 0xffff) << 16) | (bakedLight >> 16), light);
 
-                int normal = MatrixHelper.transformNormal(matNormal, false, quad.getAccurateNormal(i));
+                int normal = MatrixHelper.transformNormal(matNormal, false, quad.sodium$getAccurateNormal(i));
                 float nx = NormI8.unpackX(normal);
                 float ny = NormI8.unpackY(normal);
                 float nz = NormI8.unpackZ(normal);
@@ -153,7 +153,7 @@ public class BlockBreakingDecalGenerator implements VertexConsumer {
                 ptr += BlockVertex.STRIDE;
             }
 
-            writer.push(stack, buffer, 4, BlockVertex.FORMAT);
+            writer.sodium$push(stack, buffer, 4, BlockVertex.FORMAT);
         }
     }
 
@@ -172,15 +172,15 @@ public class BlockBreakingDecalGenerator implements VertexConsumer {
             long ptr = buffer;
 
             for (int i = 0; i < 4; i++) {
-                float x = quad.getX(i);
-                float y = quad.getY(i);
-                float z = quad.getZ(i);
+                float x = quad.sodium$getX(i);
+                float y = quad.sodium$getY(i);
+                float z = quad.sodium$getZ(i);
 
-                int bakedLight = quad.getLight(i);
+                int bakedLight = quad.sodium$getLight(i);
                 int light = lightmap[i];
                 int newLight = Math.max(((bakedLight & 0xffff) << 16) | (bakedLight >> 16), light);
 
-                int normal = MatrixHelper.transformNormal(matNormal, false, quad.getAccurateNormal(i));
+                int normal = MatrixHelper.transformNormal(matNormal, false, quad.sodium$getAccurateNormal(i));
                 float nx = NormI8.unpackX(normal);
                 float ny = NormI8.unpackY(normal);
                 float nz = NormI8.unpackZ(normal);
@@ -199,7 +199,7 @@ public class BlockBreakingDecalGenerator implements VertexConsumer {
                 ptr += IrisTerrainVertex.STRIDE;
             }
 
-            writer.push(stack, buffer, 4, IrisTerrainVertex.FORMAT);
+            writer.sodium$push(stack, buffer, 4, IrisTerrainVertex.FORMAT);
         }
     }
 

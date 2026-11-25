@@ -35,7 +35,7 @@ public class FastSimpleBakedModelRenderer {
     private static void flush(VertexBufferWriter writer) {
         if (BUFFED_VERTEX == 0) return;
         STACK.push();
-        writer.push(STACK, SCRATCH_BUFFER, BUFFED_VERTEX, EntityVertex.FORMAT);
+        writer.sodium$push(STACK, SCRATCH_BUFFER, BUFFED_VERTEX, EntityVertex.FORMAT);
         STACK.pop();
         BUFFER_PTR = SCRATCH_BUFFER;
         BUFFED_VERTEX = 0;
@@ -73,7 +73,7 @@ public class FastSimpleBakedModelRenderer {
 
         if ((faces & 0b1000000) != 0) { // Backface culling
             if ((pos0_x + pos2_x) * nx + (pos0_y + pos2_y) * ny + (pos0_z + pos2_z) * nz > 0)
-                if(((BakedQuadView)bakedQuad).getNormalFace() != ModelQuadFacing.UNASSIGNED)
+                if(((BakedQuadView)bakedQuad).sodium$getNormalFace() != ModelQuadFacing.UNASSIGNED)
                     return;
         }
         x = Float.intBitsToFloat(vertices[STRIDE]);
@@ -113,15 +113,15 @@ public class FastSimpleBakedModelRenderer {
         for (BakedQuad bakedQuad : bakedQuads) {
             BakedQuadView quad = (BakedQuadView) bakedQuad;
             if ((faces & (1 << bakedQuad.getDirection().ordinal())) == 0) {
-                if (quad.getSprite() != null) SpriteUtil.INSTANCE.markSpriteActive(quad.getSprite());
+                if (quad.sodium$getSprite() != null) SpriteUtil.INSTANCE.markSpriteActive(quad.sodium$getSprite());
                 continue;
             }
             int color = 0xFFFFFFFF;
-            if (quad.hasColor()) {
-                color = ColorARGB.toABGR((itemColors.getColor(itemStack, quad.getColorIndex())));
+            if (quad.sodium$hasColor()) {
+                color = ColorARGB.toABGR((itemColors.getColor(itemStack, quad.sodium$getColorIndex())));
             }
             putBulkData(writer, pose, bakedQuad, light, overlay, color, faces);
-            if (quad.getSprite() != null) SpriteUtil.INSTANCE.markSpriteActive(quad.getSprite());
+            if (quad.sodium$getSprite() != null) SpriteUtil.INSTANCE.markSpriteActive(quad.sodium$getSprite());
         }
     }
 

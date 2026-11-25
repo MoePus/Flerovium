@@ -61,13 +61,13 @@ public abstract class EntityRendererMixin {
                 long vertexBuffer = stack.nmalloc(64, IrisEntityVertex.STRIDE * 24);
                 int vertexCount = IrisEntityRenderer.emitQuads(vertexBuffer, cuboid, packedOverlayLight, cullingMask, CUBE_VERTEX_XY, CUBE_VERTEX_ZW, CUBE_FACE_NORMAL);
                 if (vertexCount > 0) {
-                    writer.push(stack, vertexBuffer, vertexCount, IrisEntityVertex.FORMAT);
+                    writer.sodium$push(stack, vertexBuffer, vertexCount, IrisEntityVertex.FORMAT);
                 }
             } else {
                 long vertexBuffer = stack.nmalloc(64, 864);
                 int vertexCount = flerovium$emitQuads(vertexBuffer, cuboid, packedOverlayLight, cullingMask);
                 if (vertexCount > 0) {
-                    writer.push(stack, vertexBuffer, vertexCount, EntityVertex.FORMAT);
+                    writer.sodium$push(stack, vertexBuffer, vertexCount, EntityVertex.FORMAT);
                 }
             }
         }

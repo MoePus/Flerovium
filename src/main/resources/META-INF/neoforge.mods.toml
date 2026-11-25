@@ -88,7 +88,7 @@ description='''${mod_description}'''
 [[dependencies.${mod_id}]]
     modId="sodium"
     type="required"
-    versionRange="[0.8.13,0.9)"
+    versionRange="[0.8.14-beta.2,0.9)"
     ordering="NONE"
     side="CLIENT"
 
